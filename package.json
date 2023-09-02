@@ -1,8 +1,9 @@
 {
   "name": "@moongate/solana-wallet-sdk",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "description": "MoonGate SDK for the Solana Wallet Adapter",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc"
@@ -17,4 +18,5 @@
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"
   }
+  
 }

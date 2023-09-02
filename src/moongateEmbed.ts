@@ -7,9 +7,9 @@ export class MoonGateEmbed {
     private readonly commandQueue: { command: string, data: any, resolve: (value: any) => void, reject: (reason: any) => void }[] = [];
 
     constructor() {
-        this.iframeOrigin = new URL("http://localhost:3000").origin;
+        this.iframeOrigin = new URL("https://wallet.moongate.one/").origin;
         this.iframe = document.createElement('iframe');
-        this.iframe.src = "http://localhost:3000/";
+        this.iframe.src = "https://wallet.moongate.one/";
         this.minimizeButton = this.createMinimizeButton();
         // put the iframe on the top right corner of the screen with some space
         this.iframe.style.position = 'fixed';
@@ -21,7 +21,6 @@ export class MoonGateEmbed {
         this.iframe.style.border = 'none';
         this.iframe.allow = 'clipboard-write; clipboard-read;'
         document.body.appendChild(this.iframe);
-
         window.addEventListener('message', this.handleMessage.bind(this));
     }
 
