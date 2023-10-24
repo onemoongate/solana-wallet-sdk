@@ -10,7 +10,9 @@ export class MoonGateEmbed {
     resolve: (value: any) => void;
     reject: (reason: any) => void;
   }[] = [];
-
+  private isMobileDevice(): boolean {
+    return window.matchMedia("(max-width: 767px)").matches;
+  }
   constructor() {
     window.addEventListener("message", this.handleMessage.bind(this));
     this.iframeOrigin = new URL("https://wallet.moongate.one/").origin;
@@ -19,8 +21,9 @@ export class MoonGateEmbed {
     this.minimizeButton = this.createMinimizeButton();
     // put the iframe on the top right corner of the screen with some space
     this.iframe.style.position = "fixed";
-    this.iframe.style.top = "10px";
-    this.iframe.style.right = "10px";
+    this.iframe.style.top = "50%";
+    this.iframe.style.left = "50%";
+    this.iframe.style.transform = "translate(-50%, -50%)";
     this.iframe.style.width = "500px";
     this.iframe.style.height = "600px";
     this.iframe.style.zIndex = "999999";
@@ -37,6 +40,22 @@ export class MoonGateEmbed {
       );
     };
     document.body.appendChild(this.iframe);
+    if (this.isMobileDevice()) {
+      this.iframe.style.top = "0";
+      this.iframe.style.left = "0";
+      this.iframe.style.width = "100%";
+      this.iframe.style.height = "100%";
+      this.iframe.style.transform = ""; // Reset transform
+    }
+  }
+
+  public moveModal(): void {
+    if (!this.isMobileDevice()) {
+      this.iframe.style.transform = "";
+      this.iframe.style.top = "10px";
+      this.iframe.style.right = "10px";
+      this.iframe.style.left = "auto";
+    }
   }
 
   async disconnect(): Promise<void> {
@@ -47,6 +66,7 @@ export class MoonGateEmbed {
     }
     this._ready = false;
   }
+
   private createMinimizeButton(): HTMLImageElement {
     const imgButton = document.createElement("img");
     // Set the image source
