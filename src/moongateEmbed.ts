@@ -14,21 +14,28 @@ export class MoonGateEmbed {
   constructor() {
     window.addEventListener("message", this.handleMessage.bind(this));
     this.iframeOrigin = new URL("https://wallet.moongate.one/").origin;
-    this.iframe = document.createElement("iframe");
-    this.iframe.src = "https://wallet.moongate.one/";
+    this.iframe = this.createIframe();
     this.minimizeButton = this.createMinimizeButton();
-    // put the iframe on the top right corner of the screen with some space
-    this.iframe.style.position = "fixed";
-    this.iframe.style.top = "10px";
-    this.iframe.style.right = "10px";
-    this.iframe.style.width = "500px";
-    this.iframe.style.height = "600px";
-    this.iframe.style.zIndex = "999999";
-    this.iframe.style.border = "none";
-    this.iframe.allow = "clipboard-write; clipboard-read;";
-    this.iframe.onload = () => {
-      // Once the iframe has loaded, send a message to its content
-      this.iframe.contentWindow?.postMessage(
+  }
+
+  private isMobileDevice(): boolean {
+    return window.matchMedia("(max-width: 767px)").matches;
+  }
+
+  private createIframe(): HTMLIFrameElement {
+    const iframe = document.createElement("iframe");
+    iframe.src = "https://wallet.moongate.one/";
+    iframe.style.position = "fixed";
+    iframe.style.top = "50%";
+    iframe.style.left = "50%";
+    iframe.style.transform = "translate(-50%, -50%)";
+    iframe.style.width = "500px";
+    iframe.style.height = "600px";
+    iframe.style.zIndex = "999999";
+    iframe.style.border = "none";
+    iframe.allow = "clipboard-write; clipboard-read;";
+    iframe.onload = () => {
+      iframe.contentWindow?.postMessage(
         {
           type: "initIframe",
           data: { origin: window.location.origin },
@@ -36,41 +43,74 @@ export class MoonGateEmbed {
         this.iframeOrigin
       );
     };
-    document.body.appendChild(this.iframe);
+    if (this.isMobileDevice()) {
+      iframe.style.top = "0";
+      iframe.style.left = "0";
+      iframe.style.width = "100%";
+      iframe.style.height = "100%";
+      iframe.style.transform = "";
+    }
+    document.body.appendChild(iframe);
+    return iframe;
   }
 
-  async disconnect(): Promise<void> {
-    console.log("Starting the disconnection process...");
-    this.iframe.remove();
-    if (this.minimizeButton) {
-      this.minimizeButton.remove();
+  public moveModal(corner: string = "top-right"): void {
+    if (!this.isMobileDevice()) {
+      this.iframe.style.transform = "";
+      switch (corner) {
+        case "top-left":
+          this.setPosition(this.iframe, "10px", "auto", "10px", "auto");
+          this.setPosition(this.minimizeButton, "10px", "auto", "10px", "auto");
+          break;
+        case "top-right":
+          this.setPosition(this.iframe, "10px", "10px", "auto", "auto");
+          this.setPosition(this.minimizeButton, "10px", "10px", "auto", "auto");
+          break;
+        case "bottom-left":
+          this.setPosition(this.iframe, "auto", "auto", "10px", "10px");
+          this.setPosition(this.minimizeButton, "auto", "auto", "10px", "10px");
+          break;
+        case "bottom-right":
+          this.setPosition(this.iframe, "auto", "10px", "auto", "10px");
+          this.setPosition(this.minimizeButton, "auto", "10px", "auto", "10px");
+          break;
+        default:
+          console.error("Invalid corner specified for moveModal method");
+          break;
+      }
+    } else {
+      this.setPosition(this.minimizeButton, "auto", "auto", "10px", "10px");
     }
-    this._ready = false;
   }
+
+  private setPosition(
+    element: HTMLElement,
+    top: string,
+    right: string,
+    left: string,
+    bottom: string
+  ): void {
+    element.style.top = top;
+    element.style.right = right;
+    element.style.left = left;
+    element.style.bottom = bottom;
+  }
+
   private createMinimizeButton(): HTMLImageElement {
     const imgButton = document.createElement("img");
-    // Set the image source
     imgButton.src = "https://i.ibb.co/NjxF2zw/Image-3.png";
-    // style the image to look like a button
     imgButton.style.position = "fixed";
     imgButton.style.display = "none";
     imgButton.style.width = "50px";
     imgButton.style.height = "50px";
-    imgButton.style.top = "10px";
-    imgButton.style.right = "10px";
-    imgButton.style.zIndex = "9999999"; // Ensure it's above the iframe
-    imgButton.style.cursor = "pointer"; // Change cursor to pointer on hover to indicate it's clickable
-
-    // Event listener to handle the click on the image
+    imgButton.style.zIndex = "1000000";
+    imgButton.style.cursor = "pointer";
     imgButton.addEventListener("click", this.toggleIframe.bind(this));
-
-    // Append the image button to the document body
     document.body.appendChild(imgButton);
-
     return imgButton;
   }
 
-  private toggleIframe() {
+  private toggleIframe(): void {
     if (this.iframe.style.display === "none") {
       this.iframe.style.display = "block";
       this.minimizeButton.style.display = "none";
@@ -79,10 +119,11 @@ export class MoonGateEmbed {
       this.minimizeButton.style.display = "block";
     }
   }
-  private handleMessage(event: MessageEvent) {
-    if (event.origin !== this.iframeOrigin) return;
 
+  private handleMessage(event: MessageEvent): void {
+    if (event.origin !== this.iframeOrigin) return;
     const { type, data } = event.data;
+
     if (type === "minimizeIframe") {
       this.toggleIframe();
       return;
@@ -104,10 +145,11 @@ export class MoonGateEmbed {
     }
   }
 
-  private processQueue() {
+  private processQueue(): void {
     while (this.commandQueue.length && this._ready) {
       const { command, data, resolve } = this.commandQueue.shift()!;
-      const responseType = `${command}Response`; // Determine the expected response type
+      const responseType = `${command}Response`;
+
       if (!this.listeners[responseType]) {
         this.listeners[responseType] = resolve;
         this.iframe.contentWindow?.postMessage(
@@ -118,34 +160,36 @@ export class MoonGateEmbed {
     }
   }
 
+  async disconnect(): Promise<void> {
+    console.log("Starting the disconnection process...");
+    this.iframe.remove();
+    if (this.minimizeButton) {
+      this.minimizeButton.remove();
+    }
+    this._ready = false;
+  }
+
   async sendCommand<T = unknown>(command: string, data: any): Promise<T> {
     if (this.iframe.style.display === "none") {
       this.toggleIframe();
     }
-    const responseType = `${command}Response`; // Adjust the expected response type
-    // Get the origin URL of the parent window
+    const responseType = `${command}Response`;
     const origin = window.location.origin;
     return new Promise((resolve, reject) => {
       if (!this._ready) {
         this.commandQueue.push({ command, data, resolve, reject });
-
-        // Set a timeout for queued commands
         setTimeout(() => {
           reject(new Error("Iframe did not respond in time"));
         }, 120000);
       } else {
-        // Set up the listener first.
         if (!this.listeners[responseType]) {
-          // Check for the adjusted response type
           this.listeners[responseType] = (responseData: any) => {
             resolve(responseData as T);
-            delete this.listeners[responseType]; // Optionally clean up after getting a response
+            delete this.listeners[responseType];
           };
         }
-
-        // Then send the command with the origin.
         this.iframe.contentWindow?.postMessage(
-          { type: command, data, origin }, // Include the origin in the message data
+          { type: command, data, origin },
           this.iframeOrigin
         );
       }
