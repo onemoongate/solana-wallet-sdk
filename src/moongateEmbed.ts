@@ -33,7 +33,7 @@ export class MoonGateEmbed {
     iframe.style.height = "600px";
     iframe.style.zIndex = "999999";
     iframe.style.border = "none";
-    iframe.allow = "clipboard-write; clipboard-read;";
+    iframe.allow = "clipboard-write; clipboard-read; allow-top-navigation;";
     iframe.onload = () => {
       iframe.contentWindow?.postMessage(
         {
