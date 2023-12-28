@@ -25,6 +25,7 @@ export class MoonGateEmbed {
   private createIframe(): HTMLIFrameElement {
     const iframe = document.createElement("iframe");
     iframe.src = "https://wallet.moongate.one/";
+    iframe.sandbox
     iframe.style.position = "fixed";
     iframe.style.top = "50%";
     iframe.style.left = "50%";
@@ -33,7 +34,9 @@ export class MoonGateEmbed {
     iframe.style.height = "600px";
     iframe.style.zIndex = "999999";
     iframe.style.border = "none";
-    iframe.allow = "clipboard-write; clipboard-read; allow-top-navigation;";
+    iframe.style.backgroundColor = "transparent";
+    iframe.sandbox.value= "allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation allow-popups-to-escape-sandbox";
+    iframe.allow = "clipboard-write; clipboard-read;";
     iframe.onload = () => {
       iframe.contentWindow?.postMessage(
         {
