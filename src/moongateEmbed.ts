@@ -13,7 +13,7 @@ export class MoonGateEmbed {
 
   constructor() {
     window.addEventListener("message", this.handleMessage.bind(this));
-    this.iframeOrigin = new URL("https://wallet.moongate.one/").origin;
+    this.iframeOrigin = new URL("https://staging.moongate.one/").origin;
     this.iframe = this.createIframe();
     this.minimizeButton = this.createMinimizeButton();
   }
@@ -24,7 +24,7 @@ export class MoonGateEmbed {
 
   private createIframe(): HTMLIFrameElement {
     const iframe = document.createElement("iframe");
-    iframe.src = "https://wallet.moongate.one/";
+    iframe.src = "https://staging.moongate.one/";
     iframe.sandbox
     iframe.style.position = "fixed";
     iframe.style.top = "50%";
@@ -134,6 +134,26 @@ export class MoonGateEmbed {
 
     if (type === "disconnect") {
       this.disconnect();
+      return;
+    }
+
+    if (type === "mobileConnect") {
+      location.assign(data);
+      return;
+    }
+
+    if (type == "localStorageSet") {
+      const { key, value } = data;
+      localStorage.setItem(key, value);
+      return;
+    }
+    if (type == "localStorageGet") {
+      const { key } = data;
+      const value = localStorage.getItem(key);
+      this.iframe.contentWindow?.postMessage(
+        { type: "localStorageGetResponse", data: { key, value } },
+        this.iframeOrigin
+      );
       return;
     }
 
