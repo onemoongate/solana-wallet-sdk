@@ -301,6 +301,8 @@ export class MoonGateEmbed {
         data: {
           chainId: res.chainId,
           address: res.accounts[0],
+          host: window.location.host,
+          origin: window.location.origin,
         },
       },
       this.iframeOrigin
