@@ -1,7 +1,31 @@
 // @ts-ignore
-import { ThemeCtrlState } from "@walletconnect/ethereum-provider/dist/types/types";
-import { WalletConnectModal } from "@walletconnect/modal";
-import SignClient from "@walletconnect/sign-client";
+import { walletConnect, injected } from "@wagmi/connectors";
+import {
+  Config,
+  ConnectReturnType,
+  connect,
+  createConfig,
+  disconnect,
+  http,
+  signMessage,
+} from "@wagmi/core";
+import {
+  mainnet,
+  polygon,
+  optimism,
+  arbitrum,
+  avalanche,
+  base,
+  zora,
+  zkSync,
+  opBNB,
+  linea,
+} from "@wagmi/core/chains";
+// import { ThemeCtrlState } from "@walletconnect/ethereum-provider/dist/types/types";
+// import { WalletConnectModal } from "@walletconnect/modal";
+// import SignClient from "@walletconnect/sign-client";
+import { SignableMessage, createClient } from "viem";
+import { SiweMessage } from "siwe";
 
 export class MoonGateEmbed {
   private iframe: HTMLIFrameElement;
@@ -15,11 +39,13 @@ export class MoonGateEmbed {
     resolve: (value: any) => void;
     reject: (reason: any) => void;
   }[] = [];
-  signClient: SignClient | null = null;
-  walletConnectModal: WalletConnectModal;
+  // signClient: SignClient | null = null;
+  // walletConnectModal: WalletConnectModal;
   walletConnectSession: any;
   connectedWalletAddress: string | null = null;
-  connectedProvider: any = null;
+  connectedChainId: number | null = null;
+  // connectedProvider: any = null;
+  wagmiConfig: Config;
 
   constructor() {
     window.addEventListener("message", this.handleMessage.bind(this));
@@ -27,22 +53,61 @@ export class MoonGateEmbed {
     this.iframe = this.createIframe();
     this.minimizeButton = this.createMinimizeButton();
 
-    // @ts-ignore
-    const walletConnectModal = new WalletConnectModal({
-      projectId: "927848f28c257a3e24dacce25127d8d5",
+    // const walletConnectModal = new WalletConnectModal({
+    //   projectId: "927848f28c257a3e24dacce25127d8d5",
+    // });
+
+    // this.walletConnectModal = walletConnectModal;
+
+    const wagmiConfig = createConfig({
+      chains: [
+        mainnet,
+        polygon,
+        optimism,
+        arbitrum,
+        avalanche,
+        base,
+        zora,
+        zkSync,
+        opBNB,
+        linea,
+      ],
+      // transports: {
+      //   [mainnet.id]: http(),
+      //   [polygon.id]: http(),
+      //   [optimism.id]: http(),
+      //   [arbitrum.id]: http(),
+      //   [avalanche.id]: http(),
+      //   [base.id]: http(),
+      //   [zora.id]: http(),
+      //   [zkSync.id]: http(),
+      //   [opBNB.id]: http(),
+      //   [linea.id]: http(),
+      // },
+      client({ chain }) {
+        return createClient({
+          chain,
+          transport: http(),
+        });
+      },
+      connectors: [
+        walletConnect({
+          projectId: "927848f28c257a3e24dacce25127d8d5",
+        }),
+      ],
     });
 
-    this.walletConnectModal = walletConnectModal;
+    this.wagmiConfig = wagmiConfig;
   }
 
-  async initSignClient() {
-    const signClient = await SignClient.init({
-      projectId: "927848f28c257a3e24dacce25127d8d5",
-    });
+  // async initSignClient() {
+  //   const signClient = await SignClient.init({
+  //     projectId: "927848f28c257a3e24dacce25127d8d5",
+  //   });
 
-    this.signClient = signClient;
-    return signClient;
-  }
+  //   this.signClient = signClient;
+  //   return signClient;
+  // }
 
   private isMobileDevice(): boolean {
     return window.matchMedia("(max-width: 767px)").matches;
@@ -174,6 +239,12 @@ export class MoonGateEmbed {
       return;
     }
 
+    if (type === "signMessage") {
+      console.log("Signing message", data.key, data.message);
+      this.signMessage(data.key, data.message);
+      return;
+    }
+
     if (type === "iframeReady") {
       this._ready = true;
       this.processQueue();
@@ -201,94 +272,72 @@ export class MoonGateEmbed {
   }
 
   async connectWalletConnect(): Promise<void> {
-    if (!this.signClient) {
-      console.log("Initializing sign client...");
-      this.signClient = await this.initSignClient();
-      console.log("Sign client initialized.");
-    }
-
-    const pairings = this.signClient.core.pairing.getPairings();
-
-    console.log("Pairings:", pairings);
-
-    const { uri, approval } = await this.signClient.connect({
-      // Optionally: pass a known prior pairing (e.g. from `signClient.core.pairing.getPairings()`) to skip the `uri` step.
-      // pairingTopic: pairings[0]?.topic,
-      // Provide the namespaces and chains (e.g. `eip155` for EVM-based chains) we want to use in this session.
-      requiredNamespaces: {
-        eip155: {
-          methods: [
-            // "eth_requestAccounts",
-            "eth_sendTransaction",
-            "eth_signTransaction",
-            "eth_sign",
-            "personal_sign",
-            "eth_signTypedData",
-          ],
-          chains: ["eip155:1"],
-          events: ["chainChanged", "accountsChanged"],
-        },
-      },
+    const res = await connect(this.wagmiConfig, {
+      connector: walletConnect({
+        projectId: "927848f28c257a3e24dacce25127d8d5",
+      }),
     });
 
-    console.log("URI:", uri);
-
-    if (uri) {
-      this.walletConnectModal.openModal({
-        uri,
-        CSSStyleSheet: {
-          "z-index": "100000",
-        },
-      });
-      console.log("Waiting for session approval...");
-      // Await session approval from the wallet.
-      const session = await approval();
-      console.log("Session approved:", session);
-      // Handle the returned session (e.g. update UI to "connected" state).
-      // * You will need to create this function *
-      // onSessionConnect(session);
-      this.walletConnectSession = session;
-      // Close the QRCode modal in case it was open.
-      this.walletConnectModal.closeModal();
-
-      // const walletAddress = await this.signClient.request({
-      //   topic: session.topic,
-      //   chainId: "eip155:1",
-      //   request: {
-      //     method: "eth_requestAccounts",
-      //     params: [],
-      //   },
-      // });
-
-      // console.log("Wallet address:", walletAddress);
-      console.log(session.namespaces.eip155.accounts);
-      const walletAddress = session.namespaces.eip155.accounts[0].slice(9);
-
-      console.log("Wallet address:", walletAddress);
-
-      // const signResult = await this.signClient.request({
-      //   topic: session.topic,
-      //   chainId: "eip155:1",
-      //   request: {
-      //     method: "personal_sign",
-      //     params: ["hello world", walletAddress],
-      //   },
-      // });
-
-      // console.log("Sign result:", signResult);
-    }
+    this.onConnected(res);
   }
 
   async connectInjected(): Promise<void> {
-    const provider = (window as any).ethereum;
+    const res = await connect(this.wagmiConfig, {
+      connector: injected(),
+    });
 
-    if (!provider) {
-      throw new Error("No injected provider found");
-    }
+    this.onConnected(res);
+  }
+
+  onConnected(res: ConnectReturnType<Config>) {
+    this.connectedWalletAddress = res.accounts[0];
+    this.connectedChainId = res.chainId;
+
+    console.log("Connected to wallet", res);
+
+    this.iframe.contentWindow?.postMessage(
+      {
+        type: "connected",
+        data: {
+          chainId: res.chainId,
+          address: res.accounts[0],
+        },
+      },
+      this.iframeOrigin
+    );
+  }
+
+  async signMessage(key: string, message: SignableMessage) {
+    console.log("Signing message", key, message);
+
+    const signature = await signMessage(this.wagmiConfig, {
+      message: message,
+    });
+
+    this.iframe.contentWindow?.postMessage(
+      {
+        type: "signedMessage",
+        data: {
+          key,
+          message,
+          signature,
+        },
+      },
+      this.iframeOrigin
+    );
   }
 
   async disconnect(): Promise<void> {
     console.log("Starting the disconnection process...");
+    disconnect(this.wagmiConfig);
+    this.connectedWalletAddress = null;
+    this.connectedChainId = null;
+    this.iframe.contentWindow?.postMessage(
+      {
+        type: "disconnected",
+      },
+      this.iframeOrigin
+    );
     this.iframe.remove();
     if (this.minimizeButton) {
       this.minimizeButton.remove();
