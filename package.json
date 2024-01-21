@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc"
+    "build": "tsc",
+    "dev": "tsc --watch"
   },
   "author": "MoonGate Labs",
   "license": "ISC",
@@ -17,5 +18,13 @@
     "typescript": "^5.2.2",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@wagmi/core": "^1.0.0",
+    "@walletconnect/ethereum-provider": "^2.11.0",
+    "@walletconnect/modal": "^2.6.2",
+    "@walletconnect/sign-client": "^2.11.0",
+    "@web3modal/ethereum": "^2.7.1",
+    "@web3modal/standalone": "^2.4.3"
   }
 }
