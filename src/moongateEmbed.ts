@@ -7,6 +7,7 @@ import {
   createConfig,
   disconnect,
   http,
+  reconnect,
   signMessage,
 } from "@wagmi/core";
 import {
@@ -72,18 +73,6 @@ export class MoonGateEmbed {
         opBNB,
         linea,
       ],
-      // transports: {
-      //   [mainnet.id]: http(),
-      //   [polygon.id]: http(),
-      //   [optimism.id]: http(),
-      //   [arbitrum.id]: http(),
-      //   [avalanche.id]: http(),
-      //   [base.id]: http(),
-      //   [zora.id]: http(),
-      //   [zkSync.id]: http(),
-      //   [opBNB.id]: http(),
-      //   [linea.id]: http(),
-      // },
       client({ chain }) {
         return createClient({
           chain,
@@ -91,6 +80,9 @@ export class MoonGateEmbed {
         });
       },
       connectors: [
+        injected({
+          shimDisconnect: true,
+        }),
         walletConnect({
           projectId: "927848f28c257a3e24dacce25127d8d5",
         }),
@@ -127,7 +119,7 @@ export class MoonGateEmbed {
     iframe.style.border = "none";
     iframe.style.backgroundColor = "transparent";
     iframe.sandbox.value =
-      "allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation allow-popups-to-escape-sandbox allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation";
+      "allow-scripts allow-same-origin allow-popups allow-modals allow-forms allow-top-navigation allow-popups-to-escape-sandbox allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation";
     iframe.allow = "clipboard-write; clipboard-read;";
     iframe.onload = () => {
       iframe.contentWindow?.postMessage(
@@ -239,6 +231,19 @@ export class MoonGateEmbed {
       return;
     }
 
+    // if (type == "beforeConnecting") {
+    //   console.log("Before connecting");
+    //   this.beforeConnecting();
+
+    //   return;
+    // }
+
+    if (type === "autoConnectOnLoad") {
+      console.log("Auto connect on load");
+      this.autoConnectOnLoad();
+      return;
+    }
+
     if (type === "signMessage") {
       console.log("Signing message", data.key, data.message);
       this.signMessage(data.key, data.message);
@@ -272,21 +277,66 @@ export class MoonGateEmbed {
   }
 
   async connectWalletConnect(): Promise<void> {
-    const res = await connect(this.wagmiConfig, {
-      connector: walletConnect({
-        projectId: "927848f28c257a3e24dacce25127d8d5",
-      }),
-    });
+    try {
+      await this.beforeConnecting();
 
-    this.onConnected(res);
+      const res = await connect(this.wagmiConfig, {
+        connector: walletConnect({
+          projectId: "927848f28c257a3e24dacce25127d8d5",
+        }),
+      });
+
+      this.onConnected(res);
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   async connectInjected(): Promise<void> {
-    const res = await connect(this.wagmiConfig, {
-      connector: injected(),
+    try {
+      const res = await this.beforeConnecting();
+
+      if (res) {
+        this.onConnected(res as ConnectReturnType<Config>);
+      } else {
+        const res = await connect(this.wagmiConfig, {
+          connector: injected(),
+        });
+
+        localStorage.setItem("wagmi.injected.shimDisconnect", "true");
+
+        this.onConnected(res);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  async autoConnectOnLoad(): Promise<void> {
+    const res = await this.beforeConnecting();
+
+    if (res) {
+      this.onConnected(res as ConnectReturnType<Config>);
+    }
+  }
+
+  async beforeConnecting() {
+    const reconnectRes = await reconnect(this.wagmiConfig, {
+      connectors: [
+        injected(),
+        walletConnect({
+          projectId: "927848f28c257a3e24dacce25127d8d5",
+        }),
+      ],
     });
 
-    this.onConnected(res);
+    let res = null;
+
+    if (reconnectRes.length) {
+      res = await reconnectRes[0].connector.connect();
+    }
+
+    return res;
   }
 
   onConnected(res: ConnectReturnType<Config>) {
