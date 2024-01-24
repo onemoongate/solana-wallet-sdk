@@ -3,12 +3,15 @@ import { walletConnect, injected } from "@wagmi/connectors";
 import {
   Config,
   ConnectReturnType,
+  SendTransactionParameters,
   connect,
   createConfig,
   disconnect,
   http,
   reconnect,
+  sendTransaction,
   signMessage,
+  switchChain,
 } from "@wagmi/core";
 import {
   mainnet,
@@ -26,7 +29,6 @@ import {
 // import { WalletConnectModal } from "@walletconnect/modal";
 // import SignClient from "@walletconnect/sign-client";
 import { SignableMessage, createClient } from "viem";
-import { SiweMessage } from "siwe";
 
 export class MoonGateEmbed {
   private iframe: HTMLIFrameElement;
@@ -231,6 +233,11 @@ export class MoonGateEmbed {
       return;
     }
 
+    if (type === "switchNetwork") {
+      this.switchNetwork(data.chainId);
+      return;
+    }
+
     // if (type == "beforeConnecting") {
     //   console.log("Before connecting");
     //   this.beforeConnecting();
@@ -373,6 +380,39 @@ export class MoonGateEmbed {
           key,
           message,
           signature,
+        },
+      },
+      this.iframeOrigin
+    );
+  }
+
+  async switchNetwork(chainId: number): Promise<void> {
+    console.log(this.wagmiConfig, chainId);
+    await switchChain(this.wagmiConfig, {
+      chainId: Number(chainId),
+    });
+
+    this.iframe.contentWindow?.postMessage(
+      {
+        type: "switchedNetwork",
+        data: {
+          chainId: chainId,
+        },
+      },
+      this.iframeOrigin
+    );
+  }
+
+  async sendTransaction(transaction: SendTransactionParameters): Promise<void> {
+    console.log("Sending transaction");
+
+    const hash = await sendTransaction(this.wagmiConfig, transaction);
+
+    this.iframe.contentWindow?.postMessage(
+      {
+        type: "sentTransaction",
+        data: {
+          hash,
         },
       },
       this.iframeOrigin
