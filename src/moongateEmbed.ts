@@ -232,7 +232,7 @@ export class MoonGateEmbed {
     }
 
     if (type === "connectInjected") {
-      this.connectInjected();
+      this.connectInjected(data.target);
       return;
     }
 
@@ -329,7 +329,7 @@ export class MoonGateEmbed {
     }
   }
 
-  async connectInjected(): Promise<void> {
+  async connectInjected(target?: string): Promise<void> {
     try {
       const res = await this.beforeConnecting();
 
@@ -337,7 +337,9 @@ export class MoonGateEmbed {
         this.onConnected(res as ConnectReturnType<Config>);
       } else {
         const res = await connect(this.wagmiConfig, {
-          connector: injected(),
+          connector: injected({
+            target: (target ?? "metaMask") as any,
+          }),
         });
 
         localStorage.setItem("wagmi.injected.shimDisconnect", "true");
