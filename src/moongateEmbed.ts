@@ -265,6 +265,12 @@ export class MoonGateEmbed {
       return;
     }
 
+    if (type === "sendTransaction") {
+      console.log("Sending transaction", data.key, data.transaction);
+      this.sendTransaction(data.key, data.transaction);
+      return;
+    }
+
     if (type === "iframeReady") {
       this._ready = true;
       this.processQueue();
@@ -430,7 +436,10 @@ export class MoonGateEmbed {
     );
   }
 
-  async sendTransaction(transaction: SendTransactionParameters): Promise<void> {
+  async sendTransaction(
+    key: string,
+    transaction: SendTransactionParameters
+  ): Promise<void> {
     console.log("Sending transaction");
 
     const hash = await sendTransaction(this.wagmiConfig, transaction);
@@ -439,7 +448,9 @@ export class MoonGateEmbed {
       {
         type: "sentTransaction",
         data: {
+          transaction,
           hash,
+          key,
         },
       },
       this.iframeOrigin
