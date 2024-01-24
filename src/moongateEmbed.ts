@@ -1,5 +1,5 @@
 // @ts-ignore
-import { walletConnect, injected } from "@wagmi/connectors";
+import { walletConnect, injected, coinbaseWallet } from "@wagmi/connectors";
 import {
   Config,
   ConnectReturnType,
@@ -87,6 +87,9 @@ export class MoonGateEmbed {
         }),
         walletConnect({
           projectId: "927848f28c257a3e24dacce25127d8d5",
+        }),
+        coinbaseWallet({
+          appName: "Moongate",
         }),
       ],
     });
@@ -233,6 +236,11 @@ export class MoonGateEmbed {
       return;
     }
 
+    if (type === "connectCoinbase") {
+      this.connectCoinbaseWallet();
+      return;
+    }
+
     if (type === "switchNetwork") {
       this.switchNetwork(data.chainId);
       return;
@@ -299,6 +307,22 @@ export class MoonGateEmbed {
     }
   }
 
+  async connectCoinbaseWallet(): Promise<void> {
+    try {
+      await this.beforeConnecting();
+
+      const res = await connect(this.wagmiConfig, {
+        connector: coinbaseWallet({
+          appName: "Moongate",
+        }),
+      });
+
+      this.onConnected(res);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   async connectInjected(): Promise<void> {
     try {
       const res = await this.beforeConnecting();
@@ -333,6 +357,9 @@ export class MoonGateEmbed {
         injected(),
         walletConnect({
           projectId: "927848f28c257a3e24dacce25127d8d5",
+        }),
+        coinbaseWallet({
+          appName: "Moongate",
         }),
       ],
     });
