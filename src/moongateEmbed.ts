@@ -12,6 +12,7 @@ import {
   sendTransaction,
   signMessage,
   switchChain,
+  writeContract,
 } from "@wagmi/core";
 import {
   mainnet,
@@ -143,6 +144,7 @@ export class MoonGateEmbed {
       iframe.style.transform = "";
     }
     document.body.appendChild(iframe);
+
     return iframe;
   }
 
@@ -268,6 +270,12 @@ export class MoonGateEmbed {
     if (type === "sendTransaction") {
       console.log("Sending transaction", data.key, data.transaction);
       this.sendTransaction(data.key, data.transaction);
+      return;
+    }
+
+    if (type === "writeContract") {
+      console.log("Writing contract", data.key, data.transaction);
+      this.writeContract(data.key, data.transaction);
       return;
     }
 
@@ -445,6 +453,24 @@ export class MoonGateEmbed {
     console.log("Sending transaction");
 
     const hash = await sendTransaction(this.wagmiConfig, transaction);
+
+    this.iframe.contentWindow?.postMessage(
+      {
+        type: "sentTransaction",
+        data: {
+          transaction,
+          hash,
+          key,
+        },
+      },
+      this.iframeOrigin
+    );
+  }
+
+  async writeContract(key: string, transaction: any) {
+    console.log("Sending transaction");
+
+    const hash = await writeContract(this.wagmiConfig, transaction);
 
     this.iframe.contentWindow?.postMessage(
       {
