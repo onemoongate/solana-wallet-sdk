@@ -113,7 +113,8 @@ export class MoonGateEmbed {
 
   private createIframe(): HTMLIFrameElement {
     const iframe = document.createElement("iframe");
-    iframe.src = "http://anish.local:3000";
+    // iframe.src = "http://anish.local:3000";
+    iframe.src = "https://v2.moongate.one";
     iframe.sandbox;
     iframe.style.position = "fixed";
     iframe.style.top = "50%";
