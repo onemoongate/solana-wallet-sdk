@@ -286,6 +286,7 @@ export class MoonGateEmbed {
     }
 
     if (this.listeners[type]) {
+      console.log("Received message", type, data);
       this.listeners[type](data);
     }
   }
@@ -513,6 +514,7 @@ export class MoonGateEmbed {
       if (!this._ready) {
         this.commandQueue.push({ command, data, resolve, reject });
         setTimeout(() => {
+          console.log("didn't respond in time");
           reject(new Error("Iframe did not respond in time"));
         }, 120000);
       } else {
