@@ -1,15 +1,15 @@
 {
   "name": "@anishde12020/moongate-solana-wallet-sdk",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MoonGate SDK for the Solana Wallet Adapter",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "module": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "type": "module",
   "exports": {
     ".": {
       "require": "./dist/index.js",
-      "import": "./dist/index.mjs",
+      "import": "./dist/index.cjs",
       "types": "./dist/index.d.ts"
     }
   },
