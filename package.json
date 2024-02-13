@@ -1,13 +1,23 @@
 {
   "name": "@anishde12020/moongate-solana-wallet-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MoonGate SDK for the Solana Wallet Adapter",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc",
-    "dev": "tsc --watch"
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "npm run build -- --watch src",
+    "prepublishOnly": "npm run build"
   },
   "author": "MoonGate Labs",
   "license": "ISC",
@@ -15,6 +25,7 @@
     "@babel/core": "^7.22.11",
     "@babel/preset-env": "^7.22.10",
     "babel-loader": "^9.1.3",
+    "tsup": "^8.0.2",
     "typescript": "^5.2.2",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"

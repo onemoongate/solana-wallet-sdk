@@ -53,7 +53,7 @@ export class MoonGateEmbed {
 
   constructor() {
     window.addEventListener("message", this.handleMessage.bind(this));
-    this.iframeOrigin = new URL("http://anish.local:3000").origin;
+    this.iframeOrigin = new URL("https://v2.moongate.one").origin;
     this.iframe = this.createIframe();
     this.minimizeButton = this.createMinimizeButton();
 

@@ -1,1 +1,1 @@
-export * from './moongateEmbed';
+export * from "./moongateEmbed.ts";
