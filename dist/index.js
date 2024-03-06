@@ -362,74 +362,109 @@ var MoonGateEmbed = class {
     return __async(this, null, function* () {
       var _a;
       console.log("Signing message", key, message);
-      const signature = yield signMessage(this.wagmiConfig, {
-        message
-      });
-      (_a = this.iframe.contentWindow) == null ? void 0 : _a.postMessage(
-        {
-          type: "signedMessage",
-          data: {
-            key,
-            message,
-            signature
-          }
-        },
-        this.iframeOrigin
-      );
+      try {
+        const signature = yield signMessage(this.wagmiConfig, {
+          message
+        });
+        (_a = this.iframe.contentWindow) == null ? void 0 : _a.postMessage(
+          {
+            type: "signedMessage",
+            data: {
+              key,
+              message,
+              signature
+            }
+          },
+          this.iframeOrigin
+        );
+      } catch (e) {
+        console.error("Failed to sign message", e);
+      }
     });
   }
   switchNetwork(chainId) {
     return __async(this, null, function* () {
       var _a;
       console.log(this.wagmiConfig, chainId);
-      yield switchChain(this.wagmiConfig, {
-        chainId: Number(chainId)
-      });
-      (_a = this.iframe.contentWindow) == null ? void 0 : _a.postMessage(
-        {
-          type: "switchedNetwork",
-          data: {
-            chainId
+      try {
+        yield switchChain(this.wagmiConfig, {
+          chainId: Number(chainId)
+        });
+        (_a = this.iframe.contentWindow) == null ? void 0 : _a.postMessage(
+          {
+            type: "switchedNetwork",
+            data: {
+              chainId
+            }
+          },
+          this.iframeOrigin
+        );
+      } catch (e) {
+        console.error("Failed to switch network, retrying...", e);
+        setTimeout(() => __async(this, null, function* () {
+          var _a2;
+          try {
+            yield switchChain(this.wagmiConfig, {
+              chainId: Number(chainId)
+            });
+            (_a2 = this.iframe.contentWindow) == null ? void 0 : _a2.postMessage(
+              {
+                type: "switchedNetwork",
+                data: {
+                  chainId
+                }
+              },
+              this.iframeOrigin
+            );
+          } catch (e2) {
+            console.error("Failed to switch network again", e2);
           }
-        },
-        this.iframeOrigin
-      );
+        }), 500);
+      }
     });
   }
   sendTransaction(key, transaction) {
     return __async(this, null, function* () {
       var _a;
       console.log("Sending transaction");
-      const hash = yield sendTransaction(this.wagmiConfig, transaction);
-      (_a = this.iframe.contentWindow) == null ? void 0 : _a.postMessage(
-        {
-          type: "sentTransaction",
-          data: {
-            transaction,
-            hash,
-            key
-          }
-        },
-        this.iframeOrigin
-      );
+      try {
+        const hash = yield sendTransaction(this.wagmiConfig, transaction);
+        (_a = this.iframe.contentWindow) == null ? void 0 : _a.postMessage(
+          {
+            type: "sentTransaction",
+            data: {
+              transaction,
+              hash,
+              key
+            }
+          },
+          this.iframeOrigin
+        );
+      } catch (e) {
+        console.error("Failed to send transaction", e);
+      }
     });
   }
   writeContract(key, transaction) {
     return __async(this, null, function* () {
       var _a;
       console.log("Sending transaction");
-      const hash = yield writeContract(this.wagmiConfig, transaction);
-      (_a = this.iframe.contentWindow) == null ? void 0 : _a.postMessage(
-        {
-          type: "sentTransaction",
-          data: {
-            transaction,
-            hash,
-            key
-          }
-        },
-        this.iframeOrigin
-      );
+      try {
+        const hash = yield writeContract(this.wagmiConfig, transaction);
+        (_a = this.iframe.contentWindow) == null ? void 0 : _a.postMessage(
+          {
+            type: "sentTransaction",
+            data: {
+              transaction,
+              hash,
+              key
+            }
+          },
+          this.iframeOrigin
+        );
+      } catch (e) {
+        console.error("Failed to send transaction", e);
+      }
     });
   }
   disconnect() {

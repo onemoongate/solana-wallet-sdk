@@ -414,38 +414,67 @@ export class MoonGateEmbed {
   async signMessage(key: string, message: SignableMessage) {
     console.log("Signing message", key, message);
 
-    const signature = await signMessage(this.wagmiConfig, {
-      message: message,
-    });
+    try {
+      const signature = await signMessage(this.wagmiConfig, {
+        message: message,
+      });
 
-    this.iframe.contentWindow?.postMessage(
-      {
-        type: "signedMessage",
-        data: {
-          key,
-          message,
-          signature,
+      this.iframe.contentWindow?.postMessage(
+        {
+          type: "signedMessage",
+          data: {
+            key,
+            message,
+            signature,
+          },
         },
-      },
-      this.iframeOrigin
-    );
+        this.iframeOrigin
+      );
+    } catch (e) {
+      console.error("Failed to sign message", e);
+    }
   }
 
   async switchNetwork(chainId: number): Promise<void> {
     console.log(this.wagmiConfig, chainId);
-    await switchChain(this.wagmiConfig, {
-      chainId: Number(chainId),
-    });
 
-    this.iframe.contentWindow?.postMessage(
-      {
-        type: "switchedNetwork",
-        data: {
-          chainId: chainId,
+    try {
+      await switchChain(this.wagmiConfig, {
+        chainId: Number(chainId),
+      });
+
+      this.iframe.contentWindow?.postMessage(
+        {
+          type: "switchedNetwork",
+          data: {
+            chainId: chainId,
+          },
         },
-      },
-      this.iframeOrigin
-    );
+        this.iframeOrigin
+      );
+    } catch (e) {
+      console.error("Failed to switch network, retrying...", e);
+
+      setTimeout(async () => {
+        try {
+          await switchChain(this.wagmiConfig, {
+            chainId: Number(chainId),
+          });
+
+          this.iframe.contentWindow?.postMessage(
+            {
+              type: "switchedNetwork",
+              data: {
+                chainId: chainId,
+              },
+            },
+            this.iframeOrigin
+          );
+        } catch (e) {
+          console.error("Failed to switch network again", e);
+        }
+      }, 500);
+    }
   }
 
   async sendTransaction(
@@ -454,37 +483,45 @@ export class MoonGateEmbed {
   ): Promise<void> {
     console.log("Sending transaction");
 
-    const hash = await sendTransaction(this.wagmiConfig, transaction);
+    try {
+      const hash = await sendTransaction(this.wagmiConfig, transaction);
 
-    this.iframe.contentWindow?.postMessage(
-      {
-        type: "sentTransaction",
-        data: {
-          transaction,
-          hash,
-          key,
+      this.iframe.contentWindow?.postMessage(
+        {
+          type: "sentTransaction",
+          data: {
+            transaction,
+            hash,
+            key,
+          },
         },
-      },
-      this.iframeOrigin
-    );
+        this.iframeOrigin
+      );
+    } catch (e) {
+      console.error("Failed to send transaction", e);
+    }
   }
 
   async writeContract(key: string, transaction: any) {
     console.log("Sending transaction");
 
-    const hash = await writeContract(this.wagmiConfig, transaction);
+    try {
+      const hash = await writeContract(this.wagmiConfig, transaction);
 
-    this.iframe.contentWindow?.postMessage(
-      {
-        type: "sentTransaction",
-        data: {
-          transaction,
-          hash,
-          key,
+      this.iframe.contentWindow?.postMessage(
+        {
+          type: "sentTransaction",
+          data: {
+            transaction,
+            hash,
+            key,
+          },
         },
-      },
-      this.iframeOrigin
-    );
+        this.iframeOrigin
+      );
+    } catch (e) {
+      console.error("Failed to send transaction", e);
+    }
   }
 
   async disconnect(): Promise<void> {
