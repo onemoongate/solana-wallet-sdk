@@ -1,3 +1,36 @@
+// @ts-ignore
+import { walletConnect, injected, coinbaseWallet } from "@wagmi/connectors";
+import {
+  Config,
+  ConnectReturnType,
+  SendTransactionParameters,
+  connect,
+  createConfig,
+  disconnect,
+  http,
+  reconnect,
+  sendTransaction,
+  signMessage,
+  switchChain,
+  writeContract,
+} from "@wagmi/core";
+import {
+  mainnet,
+  polygon,
+  optimism,
+  arbitrum,
+  avalanche,
+  base,
+  zora,
+  zkSync,
+  opBNB,
+  linea,
+} from "@wagmi/core/chains";
+// import { ThemeCtrlState } from "@walletconnect/ethereum-provider/dist/types/types";
+// import { WalletConnectModal } from "@walletconnect/modal";
+// import SignClient from "@walletconnect/sign-client";
+import { SignableMessage, createClient } from "viem";
+
 export class MoonGateEmbed {
   private iframe: HTMLIFrameElement;
   private iframeOrigin: string;
@@ -10,13 +43,69 @@ export class MoonGateEmbed {
     resolve: (value: any) => void;
     reject: (reason: any) => void;
   }[] = [];
+  // signClient: SignClient | null = null;
+  // walletConnectModal: WalletConnectModal;
+  walletConnectSession: any;
+  connectedWalletAddress: string | null = null;
+  connectedChainId: number | null = null;
+  // connectedProvider: any = null;
+  wagmiConfig: Config;
 
   constructor() {
     window.addEventListener("message", this.handleMessage.bind(this));
-    this.iframeOrigin = new URL("https://wallet.moongate.one/").origin;
+    this.iframeOrigin = new URL("https://v2.moongate.one").origin;
     this.iframe = this.createIframe();
     this.minimizeButton = this.createMinimizeButton();
+
+    // const walletConnectModal = new WalletConnectModal({
+    //   projectId: "927848f28c257a3e24dacce25127d8d5",
+    // });
+
+    // this.walletConnectModal = walletConnectModal;
+
+    const wagmiConfig = createConfig({
+      chains: [
+        mainnet,
+        polygon,
+        optimism,
+        arbitrum,
+        avalanche,
+        base,
+        zora,
+        zkSync,
+        opBNB,
+        linea,
+      ],
+      client({ chain }) {
+        return createClient({
+          chain,
+          transport: http(),
+        });
+      },
+      connectors: [
+        injected({
+          shimDisconnect: true,
+        }),
+        walletConnect({
+          projectId: "927848f28c257a3e24dacce25127d8d5",
+        }),
+        coinbaseWallet({
+          appName: "Moongate",
+        }),
+      ],
+    });
+
+    this.wagmiConfig = wagmiConfig;
   }
+
+  // async initSignClient() {
+  //   const signClient = await SignClient.init({
+  //     projectId: "927848f28c257a3e24dacce25127d8d5",
+  //   });
+
+  //   this.signClient = signClient;
+  //   return signClient;
+  // }
 
   private isMobileDevice(): boolean {
     return window.matchMedia("(max-width: 767px)").matches;
@@ -24,18 +113,20 @@ export class MoonGateEmbed {
 
   private createIframe(): HTMLIFrameElement {
     const iframe = document.createElement("iframe");
-    iframe.src = "https://wallet.moongate.one/";
-    iframe.sandbox
+    // iframe.src = "http://anish.local:3000";
+    iframe.src = "https://v2.moongate.one";
+    iframe.sandbox;
     iframe.style.position = "fixed";
     iframe.style.top = "50%";
     iframe.style.left = "50%";
     iframe.style.transform = "translate(-50%, -50%)";
     iframe.style.width = "500px";
     iframe.style.height = "600px";
-    iframe.style.zIndex = "999999";
+    iframe.style.zIndex = "5";
     iframe.style.border = "none";
     iframe.style.backgroundColor = "transparent";
-    iframe.sandbox.value= "allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation allow-popups-to-escape-sandbox";
+    iframe.sandbox.value =
+      "allow-scripts allow-same-origin allow-popups allow-modals allow-forms allow-top-navigation allow-popups-to-escape-sandbox allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation";
     iframe.allow = "clipboard-write; clipboard-read;";
     iframe.onload = () => {
       iframe.contentWindow?.postMessage(
@@ -54,6 +145,7 @@ export class MoonGateEmbed {
       iframe.style.transform = "";
     }
     document.body.appendChild(iframe);
+
     return iframe;
   }
 
@@ -137,6 +229,57 @@ export class MoonGateEmbed {
       return;
     }
 
+    if (type === "connectWalletConnect") {
+      this.connectWalletConnect();
+      return;
+    }
+
+    if (type === "connectInjected") {
+      this.connectInjected(data.target);
+      return;
+    }
+
+    if (type === "connectCoinbase") {
+      this.connectCoinbaseWallet();
+      return;
+    }
+
+    if (type === "switchNetwork") {
+      this.switchNetwork(data.chainId);
+      return;
+    }
+
+    // if (type == "beforeConnecting") {
+    //   console.log("Before connecting");
+    //   this.beforeConnecting();
+
+    //   return;
+    // }
+
+    if (type === "autoConnectOnLoad") {
+      console.log("Auto connect on load");
+      this.autoConnectOnLoad();
+      return;
+    }
+
+    if (type === "signMessage") {
+      console.log("Signing message", data.key, data.message);
+      this.signMessage(data.key, data.message);
+      return;
+    }
+
+    if (type === "sendTransaction") {
+      console.log("Sending transaction", data.key, data.transaction);
+      this.sendTransaction(data.key, data.transaction);
+      return;
+    }
+
+    if (type === "writeContract") {
+      console.log("Writing contract", data.key, data.transaction);
+      this.writeContract(data.key, data.transaction);
+      return;
+    }
+
     if (type === "iframeReady") {
       this._ready = true;
       this.processQueue();
@@ -144,6 +287,7 @@ export class MoonGateEmbed {
     }
 
     if (this.listeners[type]) {
+      console.log("Received message", type, data);
       this.listeners[type](data);
     }
   }
@@ -163,8 +307,234 @@ export class MoonGateEmbed {
     }
   }
 
+  async connectWalletConnect(): Promise<void> {
+    try {
+      await this.beforeConnecting();
+
+      const res = await connect(this.wagmiConfig, {
+        connector: walletConnect({
+          projectId: "927848f28c257a3e24dacce25127d8d5",
+        }),
+      });
+
+      this.onConnected(res);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  async connectCoinbaseWallet(): Promise<void> {
+    try {
+      await this.beforeConnecting();
+
+      const res = await connect(this.wagmiConfig, {
+        connector: coinbaseWallet({
+          appName: "Moongate",
+        }),
+      });
+
+      this.onConnected(res);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  async connectInjected(target?: string): Promise<void> {
+    try {
+      const res = await this.beforeConnecting();
+
+      if (res) {
+        this.onConnected(res as ConnectReturnType<Config>);
+      } else {
+        const res = await connect(this.wagmiConfig, {
+          connector: injected({
+            target: (target ?? "metaMask") as any,
+          }),
+        });
+
+        localStorage.setItem("wagmi.injected.shimDisconnect", "true");
+
+        this.onConnected(res);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  async autoConnectOnLoad(): Promise<void> {
+    const res = await this.beforeConnecting();
+
+    if (res) {
+      this.onConnected(res as ConnectReturnType<Config>);
+    }
+  }
+
+  async beforeConnecting() {
+    const reconnectRes = await reconnect(this.wagmiConfig, {
+      connectors: [
+        injected(),
+        walletConnect({
+          projectId: "927848f28c257a3e24dacce25127d8d5",
+        }),
+        coinbaseWallet({
+          appName: "Moongate",
+        }),
+      ],
+    });
+
+    let res = null;
+
+    if (reconnectRes.length) {
+      res = await reconnectRes[0].connector.connect();
+    }
+
+    return res;
+  }
+
+  onConnected(res: ConnectReturnType<Config>) {
+    this.connectedWalletAddress = res.accounts[0];
+    this.connectedChainId = res.chainId;
+
+    console.log("Connected to wallet", res);
+
+    this.iframe.contentWindow?.postMessage(
+      {
+        type: "connected",
+        data: {
+          chainId: res.chainId,
+          address: res.accounts[0],
+          host: window.location.host,
+          origin: window.location.origin,
+        },
+      },
+      this.iframeOrigin
+    );
+  }
+
+  async signMessage(key: string, message: SignableMessage) {
+    console.log("Signing message", key, message);
+
+    try {
+      const signature = await signMessage(this.wagmiConfig, {
+        message: message,
+      });
+
+      this.iframe.contentWindow?.postMessage(
+        {
+          type: "signedMessage",
+          data: {
+            key,
+            message,
+            signature,
+          },
+        },
+        this.iframeOrigin
+      );
+    } catch (e) {
+      console.error("Failed to sign message", e);
+    }
+  }
+
+  async switchNetwork(chainId: number): Promise<void> {
+    console.log(this.wagmiConfig, chainId);
+
+    try {
+      await switchChain(this.wagmiConfig, {
+        chainId: Number(chainId),
+      });
+
+      this.iframe.contentWindow?.postMessage(
+        {
+          type: "switchedNetwork",
+          data: {
+            chainId: chainId,
+          },
+        },
+        this.iframeOrigin
+      );
+    } catch (e) {
+      console.error("Failed to switch network, retrying...", e);
+
+      setTimeout(async () => {
+        try {
+          await switchChain(this.wagmiConfig, {
+            chainId: Number(chainId),
+          });
+
+          this.iframe.contentWindow?.postMessage(
+            {
+              type: "switchedNetwork",
+              data: {
+                chainId: chainId,
+              },
+            },
+            this.iframeOrigin
+          );
+        } catch (e) {
+          console.error("Failed to switch network again", e);
+        }
+      }, 500);
+    }
+  }
+
+  async sendTransaction(
+    key: string,
+    transaction: SendTransactionParameters
+  ): Promise<void> {
+    console.log("Sending transaction");
+
+    try {
+      const hash = await sendTransaction(this.wagmiConfig, transaction);
+
+      this.iframe.contentWindow?.postMessage(
+        {
+          type: "sentTransaction",
+          data: {
+            transaction,
+            hash,
+            key,
+          },
+        },
+        this.iframeOrigin
+      );
+    } catch (e) {
+      console.error("Failed to send transaction", e);
+    }
+  }
+
+  async writeContract(key: string, transaction: any) {
+    console.log("Sending transaction");
+
+    try {
+      const hash = await writeContract(this.wagmiConfig, transaction);
+
+      this.iframe.contentWindow?.postMessage(
+        {
+          type: "sentTransaction",
+          data: {
+            transaction,
+            hash,
+            key,
+          },
+        },
+        this.iframeOrigin
+      );
+    } catch (e) {
+      console.error("Failed to send transaction", e);
+    }
+  }
+
   async disconnect(): Promise<void> {
     console.log("Starting the disconnection process...");
+    disconnect(this.wagmiConfig);
+    this.connectedWalletAddress = null;
+    this.connectedChainId = null;
+    this.iframe.contentWindow?.postMessage(
+      {
+        type: "disconnected",
+      },
+      this.iframeOrigin
+    );
     this.iframe.remove();
     if (this.minimizeButton) {
       this.minimizeButton.remove();
@@ -182,6 +552,7 @@ export class MoonGateEmbed {
       if (!this._ready) {
         this.commandQueue.push({ command, data, resolve, reject });
         setTimeout(() => {
+          console.log("didn't respond in time");
           reject(new Error("Iframe did not respond in time"));
         }, 120000);
       } else {
