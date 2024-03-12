@@ -1,6 +1,6 @@
 {
-  "name": "@anishde12020/moongate-solana-wallet-sdk",
-  "version": "1.0.4",
+  "name": "@moongate/solana-wallet-sdk",
+  "version": "2.0.0",
   "description": "MoonGate SDK for the Solana Wallet Adapter",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
