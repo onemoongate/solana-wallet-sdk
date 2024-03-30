@@ -183,7 +183,7 @@ var MoonGateEmbed = class {
     imgButton.style.display = "none";
     imgButton.style.width = "50px";
     imgButton.style.height = "50px";
-    imgButton.style.zIndex = "1000000";
+    imgButton.style.zIndex = "2147483647";
     imgButton.style.cursor = "pointer";
     imgButton.addEventListener("click", this.toggleIframe.bind(this));
     document.body.appendChild(imgButton);
