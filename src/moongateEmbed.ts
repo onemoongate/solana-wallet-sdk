@@ -132,7 +132,7 @@ export class MoonGateEmbed {
     iframe.style.transform = "translate(-50%, -50%)";
     iframe.style.width = "500px";
     iframe.style.height = "600px";
-    iframe.style.zIndex = "5";
+    iframe.style.zIndex = "2147483647";
     iframe.style.border = "none";
     iframe.style.backgroundColor = "transparent";
     iframe.sandbox.value =
