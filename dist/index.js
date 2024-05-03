@@ -88,6 +88,11 @@ var MoonGateEmbed = class {
             description: "Moongate Wallet",
             url: "https://moongate.one",
             icons: [logoDataURI]
+          },
+          qrModalOptions: {
+            themeVariables: {
+              "--wcm-z-index": "2147483647"
+            }
           }
         }),
         coinbaseWallet({
@@ -282,6 +287,11 @@ var MoonGateEmbed = class {
               description: "Moongate Wallet",
               url: "https://moongate.one",
               icons: [logoDataURI]
+            },
+            qrModalOptions: {
+              themeVariables: {
+                "--wcm-z-index": "2147483647"
+              }
             }
           })
         });
@@ -346,6 +356,11 @@ var MoonGateEmbed = class {
               description: "Moongate Wallet",
               url: "https://moongate.one",
               icons: [logoDataURI]
+            },
+            qrModalOptions: {
+              themeVariables: {
+                "--wcm-z-index": "2147483647"
+              }
             }
           }),
           coinbaseWallet({

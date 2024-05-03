@@ -99,6 +99,11 @@ export class MoonGateEmbed {
             url: "https://moongate.one",
             icons: [logoDataURI],
           },
+          qrModalOptions: {
+            themeVariables: {
+              "--wcm-z-index": "2147483647",
+            },
+          },
         }),
         coinbaseWallet({
           appName: "Moongate",
@@ -330,6 +335,11 @@ export class MoonGateEmbed {
             url: "https://moongate.one",
             icons: [logoDataURI],
           },
+          qrModalOptions: {
+            themeVariables: {
+              "--wcm-z-index": "2147483647",
+            },
+          },
         }),
       });
 
@@ -396,6 +406,11 @@ export class MoonGateEmbed {
             description: "Moongate Wallet",
             url: "https://moongate.one",
             icons: [logoDataURI],
+          },
+          qrModalOptions: {
+            themeVariables: {
+              "--wcm-z-index": "2147483647",
+            },
           },
         }),
         coinbaseWallet({
