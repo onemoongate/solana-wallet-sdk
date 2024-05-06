@@ -88,6 +88,11 @@ var MoonGateEmbed = class {
             description: "Moongate Wallet",
             url: "https://moongate.one",
             icons: [logoDataURI]
+          },
+          qrModalOptions: {
+            themeVariables: {
+              "--wcm-z-index": "2147483647"
+            }
           }
         }),
         coinbaseWallet({
@@ -115,7 +120,7 @@ var MoonGateEmbed = class {
     iframe.style.top = "50%";
     iframe.style.left = "50%";
     iframe.style.transform = "translate(-50%, -50%)";
-    iframe.style.width = "500px";
+    iframe.style.width = "400px";
     iframe.style.height = "600px";
     iframe.style.zIndex = "2147483647";
     iframe.style.border = "none";
@@ -282,6 +287,11 @@ var MoonGateEmbed = class {
               description: "Moongate Wallet",
               url: "https://moongate.one",
               icons: [logoDataURI]
+            },
+            qrModalOptions: {
+              themeVariables: {
+                "--wcm-z-index": "2147483647"
+              }
             }
           })
         });
@@ -346,6 +356,11 @@ var MoonGateEmbed = class {
               description: "Moongate Wallet",
               url: "https://moongate.one",
               icons: [logoDataURI]
+            },
+            qrModalOptions: {
+              themeVariables: {
+                "--wcm-z-index": "2147483647"
+              }
             }
           }),
           coinbaseWallet({
