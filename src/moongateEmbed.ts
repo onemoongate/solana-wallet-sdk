@@ -25,6 +25,7 @@ import {
   zkSync,
   opBNB,
   linea,
+  bsc,
 } from "@wagmi/core/chains";
 // import { ThemeCtrlState } from "@walletconnect/ethereum-provider/dist/types/types";
 // import { WalletConnectModal } from "@walletconnect/modal";
@@ -80,6 +81,7 @@ export class MoonGateEmbed {
         zkSync,
         opBNB,
         linea,
+        bsc,
       ],
       client({ chain }) {
         return createClient({
