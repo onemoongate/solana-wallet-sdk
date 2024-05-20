@@ -42,12 +42,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
             fontSans.variable
           )}
         >
-          <div
+          {/*  <div
             className="bg-red-500 w-32 h-32 right-4 top-4 absolute"
             style={{
               zIndex: "2147483646",
             }}
-          />
+          /> */}
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <SolanaProvider>
               <div className="relative flex min-h-screen flex-col">
