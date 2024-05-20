@@ -5,6 +5,7 @@ declare class MoonGateEmbed {
     private iframe;
     private iframeOrigin;
     private _ready;
+    private authMode;
     private readonly listeners;
     private minimizeButton;
     private readonly commandQueue;
@@ -12,7 +13,9 @@ declare class MoonGateEmbed {
     connectedWalletAddress: string | null;
     connectedChainId: number | null;
     wagmiConfig: Config;
-    constructor();
+    constructor({ authModeAdapter }: {
+        authModeAdapter?: string | undefined;
+    });
     private isMobileDevice;
     private createIframe;
     moveModal(corner?: string): void;
@@ -29,6 +32,10 @@ declare class MoonGateEmbed {
         accounts: readonly `0x${string}`[];
         chainId: number;
     } | null>;
+    socialLogin(): Promise<void>;
+    initGoogleOneTap(): Promise<void>;
+    onGoogleSignIn(response: any): void;
+    handleGoogleLogin(idToken: any): Promise<void>;
     onConnected(res: ConnectReturnType<Config>): void;
     signMessage(key: string, message: SignableMessage): Promise<void>;
     switchNetwork(chainId: number): Promise<void>;

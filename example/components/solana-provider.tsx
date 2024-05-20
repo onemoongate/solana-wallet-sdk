@@ -14,7 +14,11 @@ export const SolanaProvider = ({ children }: { children: React.ReactNode }) => {
   const endpoint = useMemo(() => clusterApiUrl("devnet"), [])
   // const endpoint = useMemo(() => clusterApiUrl("devnet"), []);
 
-  const wallets = useMemo(() => [new MoongateWalletAdapter()], [])
+  const wallets = useMemo(() => [
+
+    new MoongateWalletAdapter({ authMode: "Google" }),
+    new MoongateWalletAdapter()
+  ], [])
 
   return (
     <ConnectionProvider endpoint={endpoint}>
