@@ -95,7 +95,7 @@ var MoonGateEmbed = class {
           },
           qrModalOptions: {
             themeVariables: {
-              "--wcm-z-index": "2147483647"
+              "--wcm-z-index": "10000"
             }
           }
         }),
@@ -127,7 +127,7 @@ var MoonGateEmbed = class {
     iframe.style.width = "400px";
     iframe.style.height = "600px";
     iframe.style.overflow = "hidden";
-    iframe.style.zIndex = "2147483647";
+    iframe.style.zIndex = "9998";
     iframe.style.border = "none";
     iframe.sandbox.value = "allow-scripts allow-same-origin allow-popups allow-modals allow-forms allow-top-navigation allow-popups-to-escape-sandbox allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation";
     iframe.allow = "clipboard-write; clipboard-read;";
@@ -192,7 +192,7 @@ var MoonGateEmbed = class {
     imgButton.style.display = "none";
     imgButton.style.width = "50px";
     imgButton.style.height = "50px";
-    imgButton.style.zIndex = "2147483647";
+    imgButton.style.zIndex = "9998";
     imgButton.style.cursor = "pointer";
     imgButton.addEventListener("click", this.toggleIframe.bind(this));
     document.body.appendChild(imgButton);
@@ -400,12 +400,13 @@ var MoonGateEmbed = class {
       script.defer = true;
       document.head.appendChild(script);
       script.onload = () => {
-        console.log("Google One Tap script loaded successfully.");
         google.accounts.id.initialize({
           client_id: clientId,
           callback: this.onGoogleSignIn.bind(this),
-          auto_select: true
+          auto_select: true,
           // Optional: Enables automatic selection if the user is already signed in
+          prompt_parent_id: "g_id_onload"
+          // Optional: A DOM element the One Tap prompt will be rendered in
         });
         google.accounts.id.prompt((notification) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
@@ -420,13 +421,11 @@ var MoonGateEmbed = class {
   }
   onGoogleSignIn(response) {
     const id_token = response.credential;
-    console.log("Google ID token:", id_token);
     this.handleGoogleLogin(id_token);
   }
   handleGoogleLogin(idToken) {
     return __async(this, null, function* () {
       var _a;
-      console.log("Processing Google login...");
       (_a = this.iframe.contentWindow) == null ? void 0 : _a.postMessage(
         {
           type: "googleAuth",
@@ -579,6 +578,13 @@ var MoonGateEmbed = class {
           type: "disconnected"
         },
         this.iframeOrigin
+      );
+      window.postMessage(
+        {
+          type: "moongate",
+          command: "disconnect"
+        },
+        "*"
       );
       this.iframe.remove();
       if (this.minimizeButton) {

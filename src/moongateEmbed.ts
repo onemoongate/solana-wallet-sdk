@@ -146,7 +146,7 @@ export class MoonGateEmbed {
     iframe.style.width = "400px";
     iframe.style.height = "600px";
     iframe.style.overflow = "hidden";
-    iframe.style.zIndex = "2147483647";
+    iframe.style.zIndex = "9998";
     iframe.style.border = "none";
     iframe.sandbox.value =
       "allow-scripts allow-same-origin allow-popups allow-modals allow-forms allow-top-navigation allow-popups-to-escape-sandbox allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation";
@@ -460,7 +460,7 @@ export class MoonGateEmbed {
     document.head.appendChild(script);
 
     script.onload = () => {
-      console.log('Google One Tap script loaded successfully.');
+
       // @ts-ignore
       google.accounts.id.initialize({
         client_id: clientId,
@@ -484,14 +484,11 @@ export class MoonGateEmbed {
 
   onGoogleSignIn(response: any) {
     const id_token = response.credential;
-
-    console.log('Google ID token:', id_token);
     this.handleGoogleLogin(id_token);
   }
 
   async handleGoogleLogin(idToken: any) {
     // Process the ID token and integrate with your authentication system
-    console.log('Processing Google login...');
 
     this.iframe.contentWindow?.postMessage(
       {
@@ -503,12 +500,6 @@ export class MoonGateEmbed {
       this.iframeOrigin
     );
 
-    /*     if (res.ok) {
-          const userData = await res.json();
-          console.log('User logged in:', userData);
-        } else {
-          console.error('Failed to log in with Google');
-        } */
     return;
   }
 
@@ -653,11 +644,19 @@ export class MoonGateEmbed {
     disconnect(this.wagmiConfig);
     this.connectedWalletAddress = null;
     this.connectedChainId = null;
+
     this.iframe.contentWindow?.postMessage(
       {
         type: "disconnected",
       },
       this.iframeOrigin
+    );
+    window.postMessage(
+      {
+        type: "moongate",
+        command: "disconnect",
+      },
+      "*"
     );
     this.iframe.remove();
     if (this.minimizeButton) {

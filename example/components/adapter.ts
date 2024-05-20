@@ -52,7 +52,9 @@ export class MoongateWalletAdapter extends BaseMessageSignerWalletAdapter {
     this._connecting = false
     this._wallet = null
     this._publicKey = null
-
+    if (typeof window !== "undefined") {
+      window.addEventListener("message", this._handleMessage.bind(this));
+    }
     if (config?.position) {
       this._position = config.position
     }
@@ -120,11 +122,21 @@ export class MoongateWalletAdapter extends BaseMessageSignerWalletAdapter {
     }
   }
 
+  private async _handleMessage(event: MessageEvent) {
+    if (event.data && event.data.type === "moongate") {
+      const { command } = event.data;
+      if (command === "disconnect") {
+        await this.disconnect();
+      }
+    }
+  }
+
   async disconnect(): Promise<void> {
     try {
       await this._wallet?.disconnect()
       this._wallet = null
       this._publicKey = null
+      this._connecting = false
       this.emit("disconnect")
     } catch (error) {
       console.error("Error encountered during disconnection:", error)
