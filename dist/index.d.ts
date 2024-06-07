@@ -6,6 +6,7 @@ declare class MoonGateEmbed {
     private iframeOrigin;
     private _ready;
     private authMode;
+    private onrampMode;
     private readonly listeners;
     private minimizeButton;
     private readonly commandQueue;
@@ -35,7 +36,9 @@ declare class MoonGateEmbed {
     socialLogin(): Promise<void>;
     initGoogleOneTap(): Promise<void>;
     onGoogleSignIn(response: any): void;
+    googleSignInPopup(): void;
     handleGoogleLogin(idToken: any): Promise<void>;
+    onRamp(url: string): void;
     onConnected(res: ConnectReturnType<Config>): void;
     signMessage(key: string, message: SignableMessage): Promise<void>;
     switchNetwork(chainId: number): Promise<void>;

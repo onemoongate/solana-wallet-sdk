@@ -14,12 +14,14 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,mdx}\" --cache"
   },
   "dependencies": {
-    "@moongate/moongate-adapter": "^0.1.5",
+    "@moongate/moongate-adapter": "^0.2.4",
     "@radix-ui/react-slot": "^1.0.2",
     "@solana/wallet-adapter-base": "^0.9.23",
     "@solana/wallet-adapter-react": "^0.15.35",
     "@solana/wallet-adapter-react-ui": "^0.9.34",
+    "@solana/wallet-adapter-solflare": "^0.6.28",
     "@solana/web3.js": "^1.89.1",
+    "@tiplink/wallet-adapter": "^2.1.13",
     "@wagmi/connectors": "^5.0.2",
     "class-variance-authority": "^0.4.0",
     "clsx": "^1.2.1",

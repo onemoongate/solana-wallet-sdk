@@ -25,7 +25,8 @@ import {
   TransactionVersion,
   VersionedTransaction,
 } from "@solana/web3.js"
-import { MoonGateEmbed } from "@moongate/solana-wallet-sdk"
+
+import { MoonGateEmbed } from "../../../dist/index"
 
 export const MoongateWalletName = "Ethereum Wallet" as WalletName<"MoonGate">
 
