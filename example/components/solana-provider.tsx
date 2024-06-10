@@ -16,8 +16,8 @@ export const SolanaProvider = ({ children }: { children: React.ReactNode }) => {
   const endpoint = useMemo(() => clusterApiUrl("devnet"), [])
 
   // const endpoint = useMemo(() => clusterApiUrl("devnet"), []);
-  registerMoonGateWallet({ authMode: "Ethereum", position: "top-left" })
-  registerMoonGateWallet({ authMode: "Google", position: "top-right" })
+  registerMoonGateWallet({ authMode: "Ethereum", position: "top-left", logoDataUri: "https://i.ibb.co/k1d9rGD/Mediamodifier-Design-svg.png" })
+  registerMoonGateWallet({ authMode: "Google", position: "top-right", logoDataUri: "https://i.ibb.co/k1d9rGD/Mediamodifier-Design-svg.png" })
   registerTipLinkWallet({
     clientId: "3d8bfc06-7a3e-4835-940e-e3ac1d6cdd6b",
     theme: 'dark',

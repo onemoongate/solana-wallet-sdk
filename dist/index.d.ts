@@ -6,6 +6,7 @@ declare class MoonGateEmbed {
     private iframeOrigin;
     private _ready;
     private authMode;
+    private logoDataURI;
     private onrampMode;
     private readonly listeners;
     private minimizeButton;
@@ -14,8 +15,9 @@ declare class MoonGateEmbed {
     connectedWalletAddress: string | null;
     connectedChainId: number | null;
     wagmiConfig: Config;
-    constructor({ authModeAdapter }: {
+    constructor({ authModeAdapter, logoDataURI }: {
         authModeAdapter?: string | undefined;
+        logoDataURI?: string | undefined;
     });
     private isMobileDevice;
     private createIframe;

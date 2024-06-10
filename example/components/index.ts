@@ -16,7 +16,6 @@ import {
     WalletSendTransactionError,
     SendTransactionOptions
 } from "@solana/wallet-adapter-base";
-import { MoongateWalletAdapter } from "./adapter"
 import {
     Transaction,
     TransactionVersion,
@@ -32,7 +31,7 @@ import type {
     SolanaSignInInput,
     SolanaSignInOutput,
 } from "@solana/wallet-standard-features";
-import { MoonGateEmbed } from "../../dist/index"
+import { MoonGateEmbed } from "../../dist/index.js";
 
 
 interface MoonGateWindow extends Window { }
@@ -53,10 +52,12 @@ type ConnectOutput = {
 // It can be called outside of a React component.
 export const registerMoonGateWallet = ({
     authMode = "Google",
+    logoDataUri = "Default",
     position = "top-right",
 }: {
     authMode?: string;
     position?: string;
+    logoDataUri?: string;
 }) => {
     if (typeof window === "undefined") {
         return () => {
@@ -67,6 +68,7 @@ export const registerMoonGateWallet = ({
         new MoongateWalletAdapter2({
             authMode: authMode,
             position: position,
+            logoDataUri: logoDataUri,
         }),
         "solana:mainnet"
     );
@@ -89,6 +91,7 @@ export class MoongateWalletAdapter2 extends BaseSignInMessageSignerWalletAdapter
     private _wallet: MoonGateEmbed | null
     private _position: string = "top-right"
     private _authMode: string = "Ethereum"
+    private _logoDataUri: string = "Default"
     private _disconnected: boolean
     private _publicKey: PublicKey | null
 
@@ -97,7 +100,7 @@ export class MoongateWalletAdapter2 extends BaseSignInMessageSignerWalletAdapter
             ? WalletReadyState.Unsupported
             : WalletReadyState.Installed
 
-    constructor(config?: { position?: string, authMode?: string }) {
+    constructor(config?: { position?: string, authMode?: string, logoDataUri?: string }) {
         super()
         this._connecting = false
         this._wallet = null
@@ -116,6 +119,10 @@ export class MoongateWalletAdapter2 extends BaseSignInMessageSignerWalletAdapter
                 this.icon = `data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDI2OCAyNjgiIHdpZHRoPSIyNjgiIGhlaWdodD0iMjY4Ij4KCTx0aXRsZT5nb29nbGUtaWNvbi1sb2dvLXN2Z3JlcG8tY29tLXN2ZzwvdGl0bGU+Cgk8c3R5bGU+CgkJLnMwIHsgZmlsbDogI2ZmZmZmZiB9IAoJCS5zMSB7IGZpbGw6ICM0Mjg1ZjQgfSAKCQkuczIgeyBmaWxsOiAjMzRhODUzIH0gCgkJLnMzIHsgZmlsbDogI2ZiYmMwNSB9IAoJCS5zNCB7IGZpbGw6ICNlYjQzMzUgfSAKCQkuczUgeyBmaWxsOiAjMDAwMDAwIH0gCgk8L3N0eWxlPgoJPHBhdGggaWQ9IlNoYXBlIDIiIGNsYXNzPSJzMCIgZD0ibTAgMzVjMC0xOS4zIDE1LjctMzUgMzUtMzVoMTk4YzE5LjMgMCAzNSAxNS43IDM1IDM1djE5OGMwIDE5LjMtMTUuNyAzNS0zNSAzNWgtMTk4Yy0xOS4zIDAtMzUtMTUuNy0zNS0zNXoiLz4KCTxwYXRoIGlkPSJMYXllciIgY2xhc3M9InMxIiBkPSJtMjM2IDEzNi40YzAtOC42LTAuNy0xNC44LTIuMi0yMS4zaC05Ny43djM4LjZoNTcuM2MtMS4xIDkuNi03LjQgMjQuMS0yMS4zIDMzLjhsLTAuMiAxLjMgMzAuOSAyMy45IDIuMiAwLjJjMTkuNi0xOC4xIDMxLTQ0LjggMzEtNzYuNXoiLz4KCTxwYXRoIGlkPSJMYXllciIgY2xhc3M9InMyIiBkPSJtMTM2LjEgMjM4LjFjMjguMSAwIDUxLjctOS4yIDY4LjktMjUuMmwtMzIuOS0yNS40Yy04LjcgNi4xLTIwLjUgMTAuNC0zNiAxMC40LTI3LjYgMC01MC45LTE4LjItNTkuMi00My4zbC0xLjMgMC4yLTMyLjEgMjQuOC0wLjQgMS4yYzE3LjEgMzQgNTIuMyA1Ny4zIDkzIDU3LjN6Ii8+Cgk8cGF0aCBpZD0iTGF5ZXIiIGNsYXNzPSJzMyIgZD0ibTc2LjkgMTU0LjZjLTIuMi02LjQtMy41LTEzLjQtMy41LTIwLjUgMC03LjIgMS4zLTE0LjEgMy4zLTIwLjZ2LTEuNGwtMzIuNS0yNS4zLTEuMSAwLjZjLTcuMSAxNC4xLTExLjEgMjkuOS0xMS4xIDQ2LjcgMCAxNi43IDQgMzIuNiAxMS4xIDQ2Ljd6Ii8+Cgk8cGF0aCBpZD0iTGF5ZXIiIGNsYXNzPSJzNCIgZD0ibTEzNi4xIDcwLjJjMTkuNSAwIDMyLjcgOC41IDQwLjIgMTUuNWwyOS40LTI4LjZjLTE4LjEtMTYuOC00MS41LTI3LjEtNjkuNi0yNy4xLTQwLjcgMC03NS45IDIzLjQtOTMgNTcuNGwzMy42IDI2LjFjOC41LTI1LjEgMzEuOC00My4zIDU5LjQtNDMuM3oiLz4KCTxnIGlkPSJGb2xkZXIgMSI+CgkJPHBhdGggaWQ9IlNoYXBlIDEiIGNsYXNzPSJzNSIgZD0ibTIxMi43IDI2Ny44Yy0zMC45IDAtNTUuOS0yNC45LTU1LjktNTUuOCAwLTMwLjkgMjUtNTUuOCA1NS45LTU1LjggMzAuOCAwIDU1LjggMjQuOSA1NS44IDU1LjggMCAzMC45LTI1IDU1LjgtNTUuOCA1NS44eiIvPgoJCTxwYXRoIGlkPSJQYXRoIDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xhc3M9InMwIiBkPSJtMjEyLjIgMTcxLjNjMi4yIDAuMSA1LjMgMC40IDYuOSAwLjggMS41IDAuMyA0LjQgMS4xIDYuMiAxLjggMS45IDAuNyA0LjkgMi4xIDYuNiAzLjIgMS43IDEgNC4zIDIuOSA1LjcgNC4xIDEuNCAxLjIgMy40IDMuMyA0LjUgNC41IDEuMSAxLjMgMi4yIDIuOCAyLjQgMy40IDAuNCAwLjggMC4zIDEuMi0wLjQgMS44LTAuNSAwLjYtMS4xIDAuOC0xLjggMC43LTAuNS0wLjItMS40LTAuOS0yLTEuOC0wLjYtMC44LTIuNS0yLjgtNC4zLTQuNS0xLjktMS44LTQuNi0zLjktNi42LTUtMS45LTEuMS01LjEtMi41LTcuMi0zLjEtMi0wLjctNS41LTEuNS03LjctMS43LTMtMC40LTQuOC0wLjMtOCAwLjEtMi4zIDAuMy01LjYgMS4xLTcuOCAxLjgtMi4xIDAuOC01LjMgMi4yLTcuMSAzLjMtMS45IDEuMi00LjYgMy4zLTYuNyA1LjUtMi40IDIuNC0zLjggMy41LTQuNSAzLjUtMC41IDAtMS4yLTAuMi0xLjUtMC41LTAuMi0wLjMtMC41LTAuOS0wLjUtMS4zIDAtMC41IDEtMS45IDIuMi0zLjIgMS4xLTEuNCAzLjUtMy41IDUuMS00LjggMS43LTEuNCA0LjctMy4yIDYuNi00LjIgMS45LTEgNS4xLTIuMiA3LjEtMi44IDEuOS0wLjYgNC43LTEuMiA2LjEtMS40IDEuNS0wLjIgNC41LTAuMyA2LjctMC4yem0zNy40IDIzLjdjMC42IDAgMi4xIDAuMSAzLjQgMC40IDEuNCAwLjIgMy40IDAuOSA0LjUgMS40IDEuMSAwLjUgMyAxLjkgNC4yIDMuMSAxLjIgMS4yIDIuNyAzLjIgMy4zIDQuNCAwLjcgMS4zIDEuNCAzLjcgMS42IDUuMyAwLjQgMi4yIDAuNCAzLjYgMCA1LjYtMC4yIDEuNC0wLjkgMy41LTEuNCA0LjctMC42IDEuMi0yIDMuMS0zLjIgNC40LTEuMyAxLjQtMyAyLjctNC43IDMuNS0yLjUgMS4yLTIuOCAxLjMtNy41IDEuMy00LjQgMC01LTAuMS03LjEtMS4xLTEuMi0wLjYtMy4yLTEuOS00LjQtMy0xLjUtMS40LTIuNi0yLjktMy42LTUtMS40LTIuOS0xLjUtMy4xLTEuNS03LjkgMC00LjUgMC4xLTUgMS4yLTcuMiAwLjctMS41IDIuMS0zLjQgMy40LTQuNyAxLjMtMS4zIDMuMS0yLjcgNC4xLTMuMiAxLTAuNSAyLjktMS4yIDQuMy0xLjUgMS4zLTAuMyAyLjgtMC41IDMuNC0wLjV6bS03IDM3LjVjMC4yIDAgMC43IDAuMyAxLjIgMC42IDAuNSAwLjQgMSAxLjEgMSAxLjYgMCAwLjUtMSAyLjEtMi40IDMuNy0xLjMgMS42LTMuNiAzLjktNS4xIDUuMi0xLjYgMS4zLTQgMy4xLTUuNSAzLjktMS40IDAuOS00LjEgMi4yLTUuOCAyLjktMS44IDAuNy00LjkgMS42LTYuOSAyLTIgMC40LTUgMC44LTYuNiAwLjgtMi42IDAtMy0wLjEtMy40LTAuOS0wLjMtMC43LTAuMy0xLjIgMC0xLjkgMC4zLTAuNSAwLjktMSAxLjQtMS4xIDAuNS0wLjEgMi4zLTAuMiAzLjktMC4zIDEuNy0wLjIgNC43LTAuNyA2LjctMS4zIDItMC42IDUuMS0xLjggNi45LTIuOCAxLjgtMC45IDQuNC0yLjYgNS44LTMuNyAxLjQtMS4xIDMuNS0zLjEgNC43LTQuNCAxLjEtMS4zIDIuNC0yLjggMi45LTMuMyAwLjUtMC41IDEtMSAxLjItMXptLTMyLjItMzcuNWMwLjUgMCAyLjEgMC4xIDMuNCAwLjQgMS40IDAuMiAzLjQgMC44IDQuNiAxLjQgMS4xIDAuNSAzLjEgMS45IDQuMyAzLjEgMS4xIDEuMiAyLjUgMi45IDMgMy45IDAuNiAxIDEuMiAyLjggMS41IDMuOSAwLjMgMS4xIDAuNiAzLjIgMC42IDQuNiAwIDEuNS0wLjMgMy42LTAuNiA0LjctMC4zIDEuMS0wLjkgMi44LTEuNCAzLjctMC41IDEtMS44IDIuNy0zIDMuOC0xLjIgMS4yLTMuMiAyLjctNC43IDMuNC0yLjUgMS4xLTMgMS4yLTcuMyAxLjItNC40IDAtNC44LTAuMS03LjMtMS4zLTEuNy0wLjgtMy40LTIuMS00LjctMy41LTEuMi0xLjMtMi42LTMuMy0zLjItNC42LTAuNi0xLjMtMS4zLTMuNC0xLjUtNC43LTAuMy0xLjgtMC4zLTMuMyAwLTUuNSAwLjMtMS43IDEtNCAxLjYtNS4zIDAuNi0xLjIgMi4xLTMuMSAzLjItNC4yIDEuMS0xLjEgMy0yLjUgNC4xLTMgMS0wLjYgMi45LTEuMiA0LjItMS41IDEuMi0wLjMgMi42LTAuNSAzLjItMC41em0tNC45IDguOGMtMC43IDAuNi0xLjggMS43LTIuMyAyLjUtMC41IDAuOC0xLjEgMi40LTEuMyAzLjYtMC4zIDEuMi0wLjQgMy0wLjIgNCAwLjEgMSAwLjUgMi41IDAuOSAzLjMgMC4zIDAuOCAxIDEuOSAxLjYgMi42IDAuNiAwLjYgMS45IDEuNSAyLjggMS45IDAuOSAwLjQgMi41IDAuNyAzLjcgMC43IDEuMiAwIDIuOC0wLjIgMy42LTAuNiAwLjktMC4zIDIuMi0xLjIgMi45LTEuOSAwLjgtMC43IDEuNy0yIDIuMS0yLjkgMC41LTEuMSAwLjgtMi42IDAuOC00LjcgMC0yLjUtMC4yLTMuNC0xLjEtNS4yLTAuNy0xLjQtMS43LTIuNy0yLjctMy40LTAuOS0wLjYtMi4zLTEuMi0zLjEtMS4zLTAuOC0wLjEtMS43LTAuMy0yLTAuNC0wLjMgMC0xLjQgMC4xLTIuNCAwLjMtMSAwLjItMi41IDAuOC0zLjMgMS41eiIvPgoJPC9nPgo8L3N2Zz4=`
             }
 
+        }
+
+        if (config?.logoDataUri) {
+            this._logoDataUri = config.logoDataUri
         }
     }
 
@@ -153,7 +160,7 @@ export class MoongateWalletAdapter2 extends BaseSignInMessageSignerWalletAdapter
         /* throw new WalletConnectionError("hello world") */
 
         try {
-            this._wallet = new MoonGateEmbed({ authModeAdapter: this._authMode })
+            this._wallet = new MoonGateEmbed({ authModeAdapter: this._authMode, logoDataURI: this._logoDataUri })
             const publicKeyData: string = await this._wallet.sendCommand<string>(
                 "login",
                 {

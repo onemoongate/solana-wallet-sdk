@@ -42,6 +42,7 @@ export class MoonGateEmbed {
   private iframeOrigin: string;
   private _ready: boolean = false;
   private authMode: string = "Ethereum";
+  private logoDataURI: string = "Default";
   private onrampMode: string = "Standard";
   private readonly listeners: { [key: string]: (data: any) => void } = {};
   private minimizeButton: HTMLImageElement;
@@ -59,12 +60,13 @@ export class MoonGateEmbed {
   // connectedProvider: any = null;
   wagmiConfig: Config;
 
-  constructor({ authModeAdapter = "Ethereum" }) {
+  constructor({ authModeAdapter = "Ethereum", logoDataURI = "Default" }) {
     window.addEventListener("message", this.handleMessage.bind(this));
     this.iframeOrigin = new URL(iframeUrl).origin;
     this.iframe = this.createIframe();
     this.minimizeButton = this.createMinimizeButton();
     this.authMode = authModeAdapter;
+    this.logoDataURI = logoDataURI;
     /* if (authModeAdapter === "Ethereum") {
 
     } else {
@@ -364,6 +366,10 @@ export class MoonGateEmbed {
       );
       this.iframe.contentWindow?.postMessage(
         { type: "onrampMethod", data: { onrampMode: this.onrampMode } },
+        this.iframeOrigin
+      );
+      this.iframe.contentWindow?.postMessage(
+        { type: "logo", data: { logoDataURI: this.logoDataURI } },
         this.iframeOrigin
       );
       this._ready = true;
