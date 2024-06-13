@@ -16,19 +16,21 @@ export const SolanaProvider = ({ children }: { children: React.ReactNode }) => {
   const endpoint = useMemo(() => clusterApiUrl("devnet"), [])
 
   // const endpoint = useMemo(() => clusterApiUrl("devnet"), []);
-  registerMoonGateWallet({ authMode: "Ethereum", position: "top-left", logoDataUri: "https://i.ibb.co/k1d9rGD/Mediamodifier-Design-svg.png" })
-  registerMoonGateWallet({ authMode: "Google", position: "top-right", logoDataUri: "https://i.ibb.co/k1d9rGD/Mediamodifier-Design-svg.png" })
-  registerTipLinkWallet({
-    clientId: "3d8bfc06-7a3e-4835-940e-e3ac1d6cdd6b",
-    theme: 'dark',
-    title: 'Moonwalk',
-    rpcUrl: process.env.REACT_APP_RPC!,
-  });
+  registerMoonGateWallet({ authMode: "Ethereum", position: "top-left", logoDataUri: "https://i.ibb.co/k1d9rGD/Mediamodifier-Design-svg.png", buttonLogoUri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTAs_TDUTeHiZQ1tqLJlvItaBOjcmRTeoSbHw&s" })
+  registerMoonGateWallet({ authMode: "Google", position: "top-right", logoDataUri: "https://i.ibb.co/k1d9rGD/Mediamodifier-Design-svg.png", buttonLogoUri: "https://iq.wiki/cdn-cgi/image/width=1920,format=auto,quality=95/https://ipfs.everipedia.org/ipfs/QmZk43NFtNP8VdVuyzdxefRuKgY1MwYFRiiEzMdEBXKyBY" })
+  registerMoonGateWallet({ authMode: "Twitter", position: "top-right", logoDataUri: "https://i.ibb.co/k1d9rGD/Mediamodifier-Design-svg.png" })
+
+  /*   registerTipLinkWallet({
+      clientId: "3d8bfc06-7a3e-4835-940e-e3ac1d6cdd6b",
+      theme: 'dark',
+      title: 'Moonwalk',
+      rpcUrl: process.env.REACT_APP_RPC!,
+    }); */
   const wallets = useMemo(() => [
 
     /* new MoongateWalletAdapter({ authMode: "Google" }), */
     /*     new MoongateWalletAdapter() */
-    new SolflareWalletAdapter(),
+    /*  new SolflareWalletAdapter(), */
   ], [])
 
 
