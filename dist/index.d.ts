@@ -40,8 +40,10 @@ declare class MoonGateEmbed {
     initGoogleOneTap(): Promise<void>;
     onGoogleSignIn(response: any): void;
     googleSignInPopup(): void;
+    initAppleSignIn(): Promise<void>;
     connectTwitter(): Promise<void>;
     handleGoogleLogin(idToken: any): Promise<void>;
+    handleTwitterAuth(idToken: any): Promise<void>;
     onRamp(url: string): void;
     onConnected(res: ConnectReturnType<Config>): void;
     signMessage(key: string, message: SignableMessage): Promise<void>;

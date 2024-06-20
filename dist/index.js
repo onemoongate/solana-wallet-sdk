@@ -45,8 +45,9 @@ import {
   linea,
   bsc
 } from "@wagmi/core/chains";
+import { appleAuthHelpers } from "react-apple-signin-auth";
 import { createClient } from "viem";
-var iframeUrl = "http://v2.moongate.one";
+var iframeUrl = "https://v2.moongate.one";
 var MoonGateEmbed = class {
   constructor({ authModeAdapter = "Ethereum", logoDataURI = "Default", buttonLogoURI = "https://i.ibb.co/NjxF2zw/Image-3.png" }) {
     this._ready = false;
@@ -251,6 +252,10 @@ var MoonGateEmbed = class {
       this.handleGoogleLogin(data);
       return;
     }
+    if (type === "twitterExternal") {
+      this.handleTwitterAuth(data);
+      return;
+    }
     if (type === "onramp") {
       this.onRamp(data);
       return;
@@ -309,6 +314,8 @@ var MoonGateEmbed = class {
         this.initGoogleOneTap();
       } else if (this.authMode === "Twitter") {
         this.connectTwitter();
+      } else if (this.authMode === "Apple") {
+        this.initAppleSignIn();
       }
     }
     if (this.listeners[type]) {
@@ -481,6 +488,78 @@ var MoonGateEmbed = class {
       "width=500,height=600"
     );
   }
+  initAppleSignIn() {
+    return __async(this, null, function* () {
+      const appleSign = document.createElement("script");
+      appleSign.src = "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js";
+      appleSign.async = true;
+      appleSign.defer = true;
+      document.head.appendChild(appleSign);
+      function generateNonce(length) {
+        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        let result = "";
+        const charactersLength = characters.length;
+        for (let i = 0; i < length; i++) {
+          result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
+      }
+      if (!localStorage.getItem("appleSignInNonce")) {
+        const nonce = generateNonce(16);
+        localStorage.setItem("appleSignInNonce", nonce);
+        appleAuthHelpers.signIn({
+          authOptions: {
+            clientId: "com.moongate.web",
+            scope: "email name",
+            redirectURI: "https://wallet.moongate.one/api1/verifyapple",
+            state: window.location.href,
+            usePopup: false,
+            nonce
+          }
+        });
+      } else {
+        let accessToken = null;
+        function getToken() {
+          return __async(this, null, function* () {
+            try {
+              const response = yield fetch(`https://wallet.moongate.one/api1/getappletoken`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ codeVerifier: localStorage.getItem("appleSignInNonce") })
+              });
+              const data = yield response.json();
+              if (data) {
+                accessToken = data.supabaseToken;
+              } else {
+                console.error("Failed to get token");
+              }
+            } catch (e) {
+              console.error(e);
+            }
+          });
+        }
+        const getTheToken = setInterval(() => __async(this, null, function* () {
+          var _a;
+          yield getToken();
+          if (accessToken) {
+            (_a = this.iframe.contentWindow) == null ? void 0 : _a.postMessage(
+              {
+                type: "twitter",
+                data: {
+                  token: accessToken
+                }
+              },
+              this.iframeOrigin
+            );
+            localStorage.removeItem("appleSignInNonce");
+            clearInterval(getTheToken);
+          }
+        }), 1500);
+      }
+    });
+  }
   connectTwitter() {
     return __async(this, null, function* () {
       const clientId = "Slo1eVdkSEt0a2dYOE1VU1JCcVk6MTpjaQ";
@@ -515,19 +594,61 @@ var MoonGateEmbed = class {
       const nonce = generateNonce(16);
       const codeVerifier = generateCodeVerifier(128);
       const codeChallenge = yield generateCodeChallenge(codeVerifier);
-      const iframe = document.createElement("iframe");
-      iframe.src = `https://v2.moongate.one/twittercodeverifier?codeVerifier=${codeVerifier}`;
-      iframe.style.display = "none";
-      document.body.appendChild(iframe);
+      const firstPopup = window.open(`https://v2.moongate.one/twittercodeverifier?codeVerifier=${codeVerifier}`);
       yield new Promise((resolve) => {
-        iframe.onload = resolve;
+        const interval = setInterval(() => {
+          if (firstPopup == null ? void 0 : firstPopup.closed) {
+            clearInterval(interval);
+            resolve(null);
+          }
+        }, 1e3);
       });
       const codeChallengeMethod = "S256";
-      const popup = window.open(
-        `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&nonce=${nonce}&scope=tweet.read%20users.read%20offline.access&code_challenge=${codeChallenge}&code_challenge_method=${codeChallengeMethod}`,
-        "twitterSignInPopup",
-        "width=500,height=600"
-      );
+      setTimeout(() => {
+        const popup = window.open(
+          `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&nonce=${nonce}&scope=tweet.read%20users.read%20offline.access&code_challenge=${codeChallenge}&code_challenge_method=${codeChallengeMethod}`,
+          "twitterSignInPopup",
+          "width=500,height=600"
+        );
+      }, 1500);
+      let accessToken = null;
+      const getTheToken = setInterval(() => __async(this, null, function* () {
+        var _a;
+        yield getToken();
+        if (accessToken) {
+          (_a = this.iframe.contentWindow) == null ? void 0 : _a.postMessage(
+            {
+              type: "twitter",
+              data: {
+                token: accessToken
+              }
+            },
+            this.iframeOrigin
+          );
+          clearInterval(getTheToken);
+        }
+      }), 1500);
+      function getToken() {
+        return __async(this, null, function* () {
+          try {
+            const response = yield fetch(`https://wallet.moongate.one/api1/gettwittertoken`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ codeVerifier })
+            });
+            const data = yield response.json();
+            if (data) {
+              accessToken = data.supabaseToken;
+            } else {
+              console.error("Failed to get token");
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        });
+      }
     });
   }
   handleGoogleLogin(idToken) {
@@ -536,6 +657,20 @@ var MoonGateEmbed = class {
       (_a = this.iframe.contentWindow) == null ? void 0 : _a.postMessage(
         {
           type: "googleAuth",
+          data: {
+            token: idToken
+          }
+        },
+        this.iframeOrigin
+      );
+    });
+  }
+  handleTwitterAuth(idToken) {
+    return __async(this, null, function* () {
+      var _a;
+      (_a = this.iframe.contentWindow) == null ? void 0 : _a.postMessage(
+        {
+          type: "token",
           data: {
             token: idToken
           }
@@ -740,6 +875,7 @@ var MoonGateEmbed = class {
       this.connectedWalletAddress = null;
       this.connectedChainId = null;
       window.removeEventListener("message", this.handleMessage);
+      localStorage.removeItem("appleSignInNonce");
       (_a = this.iframe.contentWindow) == null ? void 0 : _a.postMessage(
         {
           type: "disconnected"
