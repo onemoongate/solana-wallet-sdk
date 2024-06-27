@@ -39,6 +39,8 @@ import {
   arbitrum,
   avalanche,
   base,
+  gnosis,
+  neonMainnet,
   zora,
   zkSync,
   opBNB,
@@ -63,6 +65,7 @@ var MoonGateEmbed = class {
     window.addEventListener("message", this.handleMessage);
     this.iframeOrigin = new URL(iframeUrl).origin;
     this.iframe = this.createIframe();
+    this.iframe.setAttribute("allowtransparency", "true");
     this.buttonLogoURI = buttonLogoURI;
     this.minimizeButton = this.createMinimizeButton();
     this.authMode = authModeAdapter;
@@ -77,6 +80,8 @@ var MoonGateEmbed = class {
         base,
         zora,
         zkSync,
+        gnosis,
+        neonMainnet,
         opBNB,
         linea,
         bsc
@@ -132,6 +137,7 @@ var MoonGateEmbed = class {
     iframe.allow = "clipboard-write; clipboard-read;";
     iframe.onload = () => {
       var _a;
+      console.log("Iframe body background:", iframe.style.backgroundColor);
       (_a = iframe.contentWindow) == null ? void 0 : _a.postMessage(
         {
           type: "initIframe",
@@ -141,10 +147,10 @@ var MoonGateEmbed = class {
       );
     };
     if (this.isMobileDevice()) {
-      iframe.style.top = "0";
       iframe.style.left = "0";
+      iframe.style.top = "0";
+      iframe.style.top = [window.innerHeight - 600] + "px";
       iframe.style.width = "100%";
-      iframe.style.height = "100%";
       iframe.style.transform = "";
     }
     document.body.appendChild(iframe);
@@ -170,12 +176,64 @@ var MoonGateEmbed = class {
           this.setPosition(this.iframe, "auto", "10px", "auto", "10px");
           this.setPosition(this.minimizeButton, "auto", "10px", "auto", "10px");
           break;
+        case "center":
+          this.iframe.style.top = "50%";
+          this.iframe.style.left = "50%";
+          this.iframe.style.transform = "translate(-50%, -50%)";
+          this.minimizeButton.style.display = "none";
+          const overlay = document.createElement("div");
+          overlay.id = "overlay";
+          overlay.style.position = "fixed";
+          overlay.style.top = "0";
+          overlay.style.left = "0";
+          overlay.style.width = "100%";
+          overlay.style.height = "100%";
+          overlay.style.backgroundColor = "rgba(0, 0, 0, 0)";
+          overlay.style.zIndex = "9998";
+          overlay.style.transition = "background-color 0.5s ease";
+          document.body.appendChild(overlay);
+          setTimeout(() => {
+            overlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+          }, 10);
+          this.iframe.style.zIndex = "9999";
+          this.iframe.style.display = "block";
+          break;
         default:
           console.error("Invalid corner specified for moveModal method");
           break;
       }
+    } else if (corner === "center") {
+      const overlay = document.createElement("div");
+      overlay.id = "overlay";
+      overlay.style.position = "fixed";
+      overlay.style.top = "0";
+      overlay.style.left = "0";
+      overlay.style.width = "100%";
+      overlay.style.height = "100%";
+      overlay.style.backgroundColor = "rgba(0, 0, 0, 0)";
+      overlay.style.zIndex = "9998";
+      overlay.style.transition = "background-color 0.5s ease";
+      document.body.appendChild(overlay);
+      setTimeout(() => {
+        overlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+      }, 10);
+      this.iframe.style.zIndex = "9999";
+      this.iframe.style.display = "block";
     } else {
-      this.setPosition(this.minimizeButton, "auto", "auto", "10px", "10px");
+      switch (corner) {
+        case "top-left":
+          this.setPosition(this.minimizeButton, "10px", "auto", "10px", "auto");
+          break;
+        case "top-right":
+          this.setPosition(this.minimizeButton, "10px", "10px", "auto", "auto");
+          break;
+        case "bottom-left":
+          this.setPosition(this.minimizeButton, "auto", "auto", "10px", "10px");
+          break;
+        case "bottom-right":
+          this.setPosition(this.minimizeButton, "auto", "10px", "auto", "10px");
+          break;
+      }
     }
   }
   setPosition(element, top, right, left, bottom) {
@@ -193,8 +251,13 @@ var MoonGateEmbed = class {
     imgButton.style.borderWidth = "2px";
     imgButton.style.borderStyle = "solid";
     imgButton.style.borderColor = "white";
-    imgButton.style.width = "55px";
-    imgButton.style.height = "55px";
+    if (this.isMobileDevice()) {
+      imgButton.style.width = "45px";
+      imgButton.style.height = "45px";
+    } else {
+      imgButton.style.width = "55px";
+      imgButton.style.height = "55px";
+    }
     imgButton.style.zIndex = "2147483647";
     imgButton.style.cursor = "pointer";
     imgButton.draggable = false;
@@ -232,9 +295,26 @@ var MoonGateEmbed = class {
     if (this.iframe.style.display === "none") {
       this.iframe.style.display = "block";
       this.minimizeButton.style.display = "none";
+      if (this.isMobileDevice()) {
+        this.iframe.style.top = [window.innerHeight - 600] + "px";
+      }
     } else {
-      this.iframe.style.display = "none";
+      if (this.isMobileDevice()) {
+        this.iframe.style.transition = "top 0.5s ease, transform 0.5s ease";
+        this.iframe.style.top = `${window.innerHeight}px`;
+        this.iframe.style.transform = "translate(0, 0)";
+      } else {
+        this.iframe.style.display = "none";
+      }
       this.minimizeButton.style.display = "block";
+      setTimeout(() => {
+        if (this.isMobileDevice()) {
+          this.iframe.style.display = "none";
+          this.iframe.style.top = "0";
+          this.iframe.style.transform = "";
+          this.iframe.style.transition = "";
+        }
+      }, 500);
     }
   }
   handleMessage(event) {
@@ -242,6 +322,10 @@ var MoonGateEmbed = class {
     const { type, data } = event.data;
     if (type === "minimizeIframe") {
       this.toggleIframe();
+      const overlay = document.getElementById("overlay");
+      if (overlay) {
+        document.body.removeChild(overlay);
+      }
       return;
     }
     if (type === "disconnect") {
@@ -297,6 +381,8 @@ var MoonGateEmbed = class {
         { type: "authMethod", data: { authMode: this.authMode } },
         this.iframeOrigin
       );
+      if (type === "transactionCancelled") {
+      }
       (_b = this.iframe.contentWindow) == null ? void 0 : _b.postMessage(
         { type: "onrampMethod", data: { onrampMode: this.onrampMode } },
         this.iframeOrigin
@@ -310,11 +396,11 @@ var MoonGateEmbed = class {
       return;
     }
     if (type === "unauthenticated") {
-      if (this.authMode === "Google") {
+      if (this.authMode === "Google" || this.authMode === "Google-MoonGate") {
         this.initGoogleOneTap();
-      } else if (this.authMode === "Twitter") {
+      } else if (this.authMode === "Twitter" || this.authMode === "Twitter-MoonGate") {
         this.connectTwitter();
-      } else if (this.authMode === "Apple") {
+      } else if (this.authMode === "Apple" || this.authMode === "Apple-MoonGate") {
         this.initAppleSignIn();
       }
     }
@@ -386,7 +472,7 @@ var MoonGateEmbed = class {
         } else {
           const res2 = yield connect(this.wagmiConfig, {
             connector: injected({
-              target: target != null ? target : "metaMask"
+              /* target: (target ?? "metaMask") as any, */
             })
           });
           localStorage.setItem("wagmi.injected.shimDisconnect", "true");
@@ -729,7 +815,7 @@ var MoonGateEmbed = class {
     closeButton.style.position = "absolute";
     closeButton.style.top = "5px";
     closeButton.style.right = "5px";
-    closeButton.style.backgroundColor = "red";
+    closeButton.style.backgroundColor = "transparent";
     closeButton.style.color = "white";
     closeButton.style.border = "none";
     closeButton.style.borderRadius = "50%";
@@ -893,6 +979,10 @@ var MoonGateEmbed = class {
     return __async(this, null, function* () {
       if (this.iframe.style.display === "none") {
         this.toggleIframe();
+      }
+      if (command === "signTransaction") {
+        this.moveModal("center");
+        console.log("center");
       }
       const responseType = `${command}Response`;
       const origin = window.location.origin;

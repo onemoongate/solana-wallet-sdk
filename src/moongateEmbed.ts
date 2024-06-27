@@ -21,6 +21,8 @@ import {
   arbitrum,
   avalanche,
   base,
+  gnosis,
+  neonMainnet,
   zora,
   zkSync,
   opBNB,
@@ -59,6 +61,8 @@ export class MoonGateEmbed {
     window.addEventListener("message", this.handleMessage);
     this.iframeOrigin = new URL(iframeUrl).origin;
     this.iframe = this.createIframe();
+    // set iframe allowtransparency="true" to allow for transparency
+    this.iframe.setAttribute("allowtransparency", "true");
     this.buttonLogoURI = buttonLogoURI;
     this.minimizeButton = this.createMinimizeButton();
     this.authMode = authModeAdapter;
@@ -74,6 +78,8 @@ export class MoonGateEmbed {
         base,
         zora,
         zkSync,
+        gnosis,
+        neonMainnet,
         opBNB,
         linea,
         bsc,
@@ -131,7 +137,11 @@ export class MoonGateEmbed {
     iframe.sandbox.value =
       "allow-scripts allow-same-origin allow-popups allow-modals allow-forms allow-top-navigation allow-popups-to-escape-sandbox allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation";
     iframe.allow = "clipboard-write; clipboard-read;";
+    // allowtransparency="true" on iframe to allow for transparency
+
     iframe.onload = () => {
+      console.log('Iframe body background:', iframe.style.backgroundColor);
+
       iframe.contentWindow?.postMessage(
         {
           type: "initIframe",
@@ -141,10 +151,11 @@ export class MoonGateEmbed {
       );
     };
     if (this.isMobileDevice()) {
-      iframe.style.top = "0";
+      // start the iframe from the bottom of the screen where the content ends
       iframe.style.left = "0";
+      iframe.style.top = "0";
+      iframe.style.top = [window.innerHeight - 600] + "px";
       iframe.style.width = "100%";
-      iframe.style.height = "100%";
       iframe.style.transform = "";
     }
     document.body.appendChild(iframe);
@@ -172,12 +183,75 @@ export class MoonGateEmbed {
           this.setPosition(this.iframe, "auto", "10px", "auto", "10px");
           this.setPosition(this.minimizeButton, "auto", "10px", "auto", "10px");
           break;
+        case "center":
+          this.iframe.style.top = "50%";
+          this.iframe.style.left = "50%";
+          this.iframe.style.transform = "translate(-50%, -50%)";
+          this.minimizeButton.style.display = "none";
+          // gray out the entire screen behind the iframe and slowly fade in
+          const overlay = document.createElement("div");
+          // give it the id overlay\
+          overlay.id = "overlay";
+          overlay.style.position = "fixed";
+          overlay.style.top = "0";
+          overlay.style.left = "0";
+          overlay.style.width = "100%";
+          overlay.style.height = "100%";
+          overlay.style.backgroundColor = "rgba(0, 0, 0, 0)";
+          overlay.style.zIndex = "9998";
+          overlay.style.transition = "background-color 0.5s ease";
+          document.body.appendChild(overlay);
+          setTimeout(() => {
+            overlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+          }, 10);
+          // increase z-index of iframe to be above overlay
+          this.iframe.style.zIndex = "9999";
+          // make iframe 100% width and height
+          this.iframe.style.display = "block";
+
+          break;
+
         default:
           console.error("Invalid corner specified for moveModal method");
           break;
       }
+    } else if (corner === "center") {
+      // gray out the entire screen behind the iframe and slowly fade in
+      const overlay = document.createElement("div" as any);
+      // give it the id overlay\
+      overlay.id = "overlay";
+      overlay.style.position = "fixed";
+      overlay.style.top = "0";
+      overlay.style.left = "0";
+      overlay.style.width = "100%";
+      overlay.style.height = "100%";
+      overlay.style.backgroundColor = "rgba(0, 0, 0, 0)";
+      overlay.style.zIndex = "9998";
+      overlay.style.transition = "background-color 0.5s ease";
+      document.body.appendChild(overlay);
+      setTimeout(() => {
+        overlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+      }, 10);
+      // increase z-index of iframe to be above overlay
+      this.iframe.style.zIndex = "9999";
+      // make iframe 100% width and height
+      this.iframe.style.display = "block";
     } else {
-      this.setPosition(this.minimizeButton, "auto", "auto", "10px", "10px");
+      switch (corner) {
+        case "top-left":
+          this.setPosition(this.minimizeButton, "10px", "auto", "10px", "auto");
+          break;
+        case "top-right":
+          this.setPosition(this.minimizeButton, "10px", "10px", "auto", "auto");
+          break;
+        case "bottom-left":
+          this.setPosition(this.minimizeButton, "auto", "auto", "10px", "10px");
+          break;
+        case "bottom-right":
+          this.setPosition(this.minimizeButton, "auto", "10px", "auto", "10px");
+          break;
+
+      }
     }
   }
 
@@ -205,8 +279,13 @@ export class MoonGateEmbed {
     imgButton.style.borderWidth = "2px";
     imgButton.style.borderStyle = "solid";
     imgButton.style.borderColor = "white";
-    imgButton.style.width = "55px";
-    imgButton.style.height = "55px";
+    if (this.isMobileDevice()) {
+      imgButton.style.width = "45px";
+      imgButton.style.height = "45px";
+    } else {
+      imgButton.style.width = "55px";
+      imgButton.style.height = "55px";
+    }
     imgButton.style.zIndex = "2147483647";
     imgButton.style.cursor = "pointer";
     imgButton.draggable = false; // Prevent default image dragging
@@ -253,11 +332,33 @@ export class MoonGateEmbed {
     if (this.iframe.style.display === "none") {
       this.iframe.style.display = "block";
       this.minimizeButton.style.display = "none";
+      if (this.isMobileDevice()) {
+        this.iframe.style.top = [window.innerHeight - 600] + "px";
+      }
     } else {
-      this.iframe.style.display = "none";
+      if (this.isMobileDevice()) {
+        this.iframe.style.transition = "top 0.5s ease, transform 0.5s ease";
+        this.iframe.style.top = `${window.innerHeight}px`;
+        this.iframe.style.transform = "translate(0, 0)";
+      } else {
+        this.iframe.style.display = "none";
+      }
       this.minimizeButton.style.display = "block";
+      setTimeout(() => {
+        if (this.isMobileDevice()) {
+          this.iframe.style.display = "none";
+          this.iframe.style.top = "0"; // Reset position for when it is shown again
+          this.iframe.style.transform = ""; // Reset transform
+          this.iframe.style.transition = ""; // Reset transition
+        }
+
+      }, 500);
     }
   }
+
+
+
+
 
   private handleMessage(event: MessageEvent): void {
     /* if (event.origin !== this.iframeOrigin) return; */
@@ -265,6 +366,11 @@ export class MoonGateEmbed {
 
     if (type === "minimizeIframe") {
       this.toggleIframe();
+      // remove the overlay if it exists
+      const overlay = document.getElementById("overlay");
+      if (overlay) {
+        document.body.removeChild(overlay);
+      }
       return;
     }
 
@@ -331,6 +437,9 @@ export class MoonGateEmbed {
         { type: "authMethod", data: { authMode: this.authMode } },
         this.iframeOrigin
       );
+      if (type === "transactionCancelled") {
+        // do stuff
+      }
       this.iframe.contentWindow?.postMessage(
         { type: "onrampMethod", data: { onrampMode: this.onrampMode } },
         this.iframeOrigin
@@ -346,11 +455,11 @@ export class MoonGateEmbed {
     }
 
     if (type === "unauthenticated") {
-      if (this.authMode === "Google") {
+      if (this.authMode === "Google" || this.authMode === "Google-MoonGate") {
         this.initGoogleOneTap();
-      } else if (this.authMode === "Twitter") {
+      } else if (this.authMode === "Twitter" || this.authMode === "Twitter-MoonGate") {
         this.connectTwitter();
-      } else if (this.authMode === "Apple") {
+      } else if (this.authMode === "Apple" || this.authMode === "Apple-MoonGate") {
         this.initAppleSignIn();
       }
     }
@@ -427,7 +536,7 @@ export class MoonGateEmbed {
       } else {
         const res = await connect(this.wagmiConfig, {
           connector: injected({
-            target: (target ?? "metaMask") as any,
+            /* target: (target ?? "metaMask") as any, */
           }),
         });
 
@@ -808,7 +917,7 @@ export class MoonGateEmbed {
     closeButton.style.position = "absolute";
     closeButton.style.top = "5px";
     closeButton.style.right = "5px";
-    closeButton.style.backgroundColor = "red";
+    closeButton.style.backgroundColor = "transparent";
     closeButton.style.color = "white";
     closeButton.style.border = "none";
     closeButton.style.borderRadius = "50%";
@@ -914,7 +1023,6 @@ export class MoonGateEmbed {
   ): Promise<void> {
     try {
       const hash = await sendTransaction(this.wagmiConfig, transaction);
-
       this.iframe.contentWindow?.postMessage(
         {
           type: "sentTransaction",
@@ -974,6 +1082,10 @@ export class MoonGateEmbed {
   async sendCommand<T = unknown>(command: string, data: any): Promise<T> {
     if (this.iframe.style.display === "none") {
       this.toggleIframe();
+    }
+    if (command === "signTransaction") {
+      this.moveModal("center");
+      console.log("center")
     }
     const responseType = `${command}Response`;
     const origin = window.location.origin;

@@ -1,5 +1,6 @@
-import { Config, ConnectReturnType, SendTransactionParameters } from '@wagmi/core';
+import * as viem from 'viem';
 import { SignableMessage } from 'viem';
+import { Config, ConnectReturnType, SendTransactionParameters } from '@wagmi/core';
 
 declare class MoonGateEmbed {
     private iframe;
@@ -34,7 +35,7 @@ declare class MoonGateEmbed {
     connectInjected(target?: string): Promise<void>;
     autoConnectOnLoad(): Promise<void>;
     beforeConnecting(): Promise<{
-        accounts: readonly `0x${string}`[];
+        accounts: readonly viem.Address[];
         chainId: number;
     } | null>;
     initGoogleOneTap(): Promise<void>;
