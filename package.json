@@ -1,6 +1,6 @@
 {
   "name": "@moongate/solana-wallet-sdk",
-  "version": "3.1.9",
+  "version": "3.2.4",
   "description": "MoonGate SDK for the Solana Wallet Adapter",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -25,11 +25,8 @@
   "dependencies": {
     "@types/apple-signin-api": "^1.5.3",
     "@types/google-one-tap": "^1.2.6",
-    "@wagmi/connectors": "^4.1.6",
-    "@wagmi/core": "^2.3.1",
-    "@web3modal/ethereum": "^2.7.1",
-    "@web3modal/standalone": "^2.4.3",
-    "apple-signin-auth": "^1.7.6",
+    "@wagmi/connectors": "^5.0.19",
+    "@wagmi/core": "^2.11.5",
     "react-apple-signin-auth": "^1.1.0",
     "viem": "^2.4.0"
   },
